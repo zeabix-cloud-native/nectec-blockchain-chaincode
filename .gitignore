@@ -25,6 +25,7 @@ package-lock.json
 bin/
 builders/
 test-network/
+rest-api-go/
 ci/
 config/
 external-chaincode/

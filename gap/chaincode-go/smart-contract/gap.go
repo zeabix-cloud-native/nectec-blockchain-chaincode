@@ -1,4 +1,4 @@
-package farmer
+package gap
 
 import (
 	"encoding/base64"
@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/entity"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/entity"
 )
 
 // SmartContract provides functions for managing an Asset
@@ -15,8 +15,7 @@ type SmartContract struct {
 	contractapi.Contract
 }
 
-// CreateAsset issues a new asset to the world state with given details.
-func (s *SmartContract) CreateAsset(
+func (s *SmartContract) CreateGAP(
 	ctx contractapi.TransactionContextInterface,
 	args string,
 ) error {
@@ -26,21 +25,13 @@ func (s *SmartContract) CreateAsset(
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
-		return fmt.Errorf("submitting client not authorized to create asset, does not have farmer.creator role")
+		return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role")
 	}
 
-	err := ctx.GetClientIdentity().AssertAttributeValue("farmer.creator", "true")
+	err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
-		return fmt.Errorf("submitting client not authorized to create asset, does not have farmer.creator role")
-	}
-
-	exists, err := s.AssetExists(ctx, input.Id)
-	if err != nil {
-		return err
-	}
-	if exists {
-		return fmt.Errorf("the asset %s already exists", input.Id)
+		return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role1")
 	}
 
 	// Get ID of submitting client identity
@@ -48,34 +39,26 @@ func (s *SmartContract) CreateAsset(
 	if err != nil {
 		return err
 	}
+	// setId := uuid.New()
 
 	asset := entity.Transection{
-		Prefix:              input.Prefix,
-		FirstName:           input.FirstName,
-		LastName:            input.LastName,
-		NationalID:          input.NationalID,
-		AddressRegistration: input.AddressRegistration,
-		Address:             input.Address,
-		VillageName:         input.VillageName,
-		VillageNo:           input.VillageNo,
-		Road:                input.Road,
-		Alley:               input.Alley,
-		Subdistrict:         input.Subdistrict,
-		District:            input.District,
-		Province:            input.Province,
-		ZipCode:             input.ZipCode,
-		Phone:               input.Phone,
-		MobilePhone:         input.MobilePhone,
-		Email:               input.Email,
-		Owner:               clientID,
-		OrgName:             orgName,
+		ID:                input.ID,
+		AgriStandard:      input.AgriStandard,
+		FarmOwner:         input.FarmOwner,
+		FarmOwnerJuristic: input.FarmOwnerJuristic,
+		FarmLocation:      input.FarmLocation,
+		RegisterPlants:    input.RegisterPlants,
+		Owner:             clientID,
+		OrgName:           orgName,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
 		return err
 	}
+	fmt.Println(assetJSON)
+	// return fmt.Errorf("submitting", input.Id)
 
-	return ctx.GetStub().PutState(input.Id, assetJSON)
+	return ctx.GetStub().PutState(input.ID, assetJSON)
 }
 
 // UpdateAsset updates an existing asset in the world state with provided parameters.
@@ -175,10 +158,8 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	return &asset, nil
 }
 
-// GetAllAssets returns all assets found in world state
-func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]*entity.Transection, error) {
+func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface) ([]*entity.Transection, error) {
 
-	// Query all assets from the world state
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 
@@ -254,18 +235,18 @@ func (s *SmartContract) FilterAsset(ctx contractapi.TransactionContextInterface,
 			return nil, err
 		}
 
-		switch typeFilter {
-		case "OrgName":
-			if asset.OrgName == value {
-				assets = append(assets, &asset)
-			}
-		case "NationalID":
-			if asset.NationalID == value {
-				assets = append(assets, &asset)
-			}
-		default:
-			return nil, fmt.Errorf("unsupported filter type: %s", typeFilter)
-		}
+		// switch typeFilter {
+		// case "OrgName":
+		// 	if asset.OrgName == value {
+		// 		assets = append(assets, &asset)
+		// 	}
+		// case "NationalID":
+		// 	if asset.NationalID == value {
+		// 		assets = append(assets, &asset)
+		// 	}
+		// default:
+		// 	return nil, fmt.Errorf("unsupported filter type: %s", typeFilter)
+		// }
 	}
 
 	return assets, nil

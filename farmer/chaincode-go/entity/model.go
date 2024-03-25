@@ -1,6 +1,7 @@
 package entity
 
 type Transection struct {
+	Id                  string `json:"id"`
 	Prefix              string `json:"prefix"`
 	FirstName           string `json:"firstName"`
 	LastName            string `json:"lastName"`
