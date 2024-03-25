@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/entity"
@@ -254,17 +255,16 @@ func (s *SmartContract) FilterAsset(ctx contractapi.TransactionContextInterface,
 			return nil, err
 		}
 
-		switch typeFilter {
-		case "OrgName":
-			if asset.OrgName == value {
-				assets = append(assets, &asset)
-			}
-		case "NationalID":
-			if asset.NationalID == value {
-				assets = append(assets, &asset)
-			}
-		default:
-			return nil, fmt.Errorf("unsupported filter type: %s", typeFilter)
+		// Use reflection to get the value of the field based on typeFilter
+		v := reflect.ValueOf(asset)
+		field := v.FieldByName(typeFilter)
+		if !field.IsValid() {
+			return nil, fmt.Errorf("invalid filter type: %s", typeFilter)
+		}
+
+		// Convert field value to string and compare with the provided value
+		if field.String() == value {
+			assets = append(assets, &asset)
 		}
 	}
 
