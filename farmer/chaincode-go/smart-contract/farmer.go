@@ -27,7 +27,7 @@ func (s *SmartContract) CreateAsset(
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
-		return fmt.Errorf("submitting client not authorized to create asset, does not have farmer.creator role")
+		return fmt.Errorf("Unmarshal json string")
 	}
 
 	err := ctx.GetClientIdentity().AssertAttributeValue("farmer.creator", "true")
@@ -44,7 +44,6 @@ func (s *SmartContract) CreateAsset(
 		return fmt.Errorf("the asset %s already exists", input.Id)
 	}
 
-	// Get ID of submitting client identity
 	clientID, err := s.GetSubmittingClientIdentity(ctx)
 	if err != nil {
 		return err
@@ -79,12 +78,17 @@ func (s *SmartContract) CreateAsset(
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
-// UpdateAsset updates an existing asset in the world state with provided parameters.
-func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, id string,
-	firstName string,
-	lastName string) error {
+func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
+	args string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
+	var input entity.Transection
+	errInput := json.Unmarshal([]byte(args), &input)
+
+	if errInput != nil {
+		return fmt.Errorf("Unmarshal json string")
+	}
+
+	asset, err := s.ReadAsset(ctx, input.Id)
 	if err != nil {
 		return err
 	}
@@ -98,15 +102,31 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
 	}
 
-	asset.FirstName = firstName
-	asset.LastName = lastName
+	asset.Id = input.Id
+	asset.Prefix = input.Prefix
+	asset.FirstName = input.FirstName
+	asset.LastName = input.LastName
+	asset.NationalID = input.NationalID
+	asset.AddressRegistration = input.AddressRegistration
+	asset.Address = input.Address
+	asset.VillageName = input.VillageName
+	asset.VillageNo = input.VillageNo
+	asset.Road = input.Road
+	asset.Alley = input.Alley
+	asset.Subdistrict = input.Subdistrict
+	asset.District = input.District
+	asset.Province = input.Province
+	asset.ZipCode = input.ZipCode
+	asset.Phone = input.Phone
+	asset.MobilePhone = input.MobilePhone
+	asset.Email = input.Email
 
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
 		return err
 	}
 
-	return ctx.GetStub().PutState(id, assetJSON)
+	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
 // DeleteAsset deletes a given asset from the world state.
@@ -129,7 +149,6 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().DelState(id)
 }
 
-// TransferAsset updates the owner field of asset with given id in world state.
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, id string, newOwner string) error {
 
 	asset, err := s.ReadAsset(ctx, id)
@@ -155,8 +174,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 
-// ReadAsset returns the asset stored in the world state with given id.
-func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*entity.TransectionReponse, error) {
+func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*entity.Transection, error) {
 
 	assetJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
@@ -166,7 +184,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 		return nil, fmt.Errorf("the asset %s does not exist", id)
 	}
 
-	var asset entity.TransectionReponse
+	var asset entity.Transection
 	err = json.Unmarshal(assetJSON, &asset)
 	if err != nil {
 		return nil, err
@@ -176,7 +194,6 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	return &asset, nil
 }
 
-// GetAllAssets returns all assets found in world state
 func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]*entity.Transection, error) {
 
 	// Query all assets from the world state
@@ -234,8 +251,7 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 	return string(decodeID), nil
 }
 
-// FilterAsset filters assets based on a specified field and value
-func (s *SmartContract) FilterAsset(ctx contractapi.TransactionContextInterface, typeFilter, value string) ([]*entity.Transection, error) {
+func (s *SmartContract) FilterFarmer(ctx contractapi.TransactionContextInterface, typeFilter, value string) ([]*entity.Transection, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
@@ -255,14 +271,12 @@ func (s *SmartContract) FilterAsset(ctx contractapi.TransactionContextInterface,
 			return nil, err
 		}
 
-		// Use reflection to get the value of the field based on typeFilter
 		v := reflect.ValueOf(asset)
 		field := v.FieldByName(typeFilter)
 		if !field.IsValid() {
 			return nil, fmt.Errorf("invalid filter type: %s", typeFilter)
 		}
 
-		// Convert field value to string and compare with the provided value
 		if field.String() == value {
 			assets = append(assets, &asset)
 		}

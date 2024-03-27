@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"reflect"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/entity"
@@ -20,12 +21,12 @@ func (s *SmartContract) CreateGAP(
 	args string,
 ) error {
 
-	var input entity.Transection
+	var input entity.TransectionGAP
 
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
-		return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role")
+		return fmt.Errorf("Unmarshal json string")
 	}
 
 	err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
@@ -34,15 +35,13 @@ func (s *SmartContract) CreateGAP(
 		return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role1")
 	}
 
-	// Get ID of submitting client identity
 	clientID, err := s.GetSubmittingClientIdentity(ctx)
 	if err != nil {
 		return err
 	}
-	// setId := uuid.New()
 
-	asset := entity.Transection{
-		ID:                input.ID,
+	asset := entity.TransectionGAP{
+		Id:                input.Id,
 		AgriStandard:      input.AgriStandard,
 		FarmOwner:         input.FarmOwner,
 		FarmOwnerJuristic: input.FarmOwnerJuristic,
@@ -56,17 +55,20 @@ func (s *SmartContract) CreateGAP(
 		return err
 	}
 	fmt.Println(assetJSON)
-	// return fmt.Errorf("submitting", input.Id)
 
-	return ctx.GetStub().PutState(input.ID, assetJSON)
+	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
-// UpdateAsset updates an existing asset in the world state with provided parameters.
-func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, id string,
-	firstName string,
-	lastName string) error {
+func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, args string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
+	var input entity.TransectionGAP
+	errInput := json.Unmarshal([]byte(args), &input)
+
+	if errInput != nil {
+		return fmt.Errorf("Unmarshal json string")
+	}
+
+	asset, err := s.ReadAsset(ctx, input.Id)
 	if err != nil {
 		return err
 	}
@@ -80,15 +82,19 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
 	}
 
-	asset.FirstName = firstName
-	asset.LastName = lastName
+	asset.Id = input.Id
+	asset.AgriStandard = input.AgriStandard
+	asset.FarmOwner = input.FarmOwner
+	asset.FarmOwnerJuristic = input.FarmOwnerJuristic
+	asset.FarmLocation = input.FarmLocation
+	asset.RegisterPlants = input.RegisterPlants
 
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
 		return err
 	}
 
-	return ctx.GetStub().PutState(id, assetJSON)
+	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
 // DeleteAsset deletes a given asset from the world state.
@@ -137,8 +143,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 
-// ReadAsset returns the asset stored in the world state with given id.
-func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*entity.TransectionReponse, error) {
+func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*entity.TransectionGAP, error) {
 
 	assetJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
@@ -148,7 +153,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 		return nil, fmt.Errorf("the asset %s does not exist", id)
 	}
 
-	var asset entity.TransectionReponse
+	var asset entity.TransectionGAP
 	err = json.Unmarshal(assetJSON, &asset)
 	if err != nil {
 		return nil, err
@@ -158,7 +163,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	return &asset, nil
 }
 
-func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface) ([]*entity.Transection, error) {
+func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface) ([]*entity.TransectionGAP, error) {
 
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
@@ -168,14 +173,14 @@ func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface) (
 	}
 	defer resultsIterator.Close()
 
-	var assets []*entity.Transection
+	var assets []*entity.TransectionGAP
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var asset entity.Transection
+		var asset entity.TransectionGAP
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
 			return nil, err
@@ -190,7 +195,6 @@ func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface) (
 	return assets, nil
 }
 
-// AssetExists returns true when asset with given ID exists in world state
 func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
 
 	assetJSON, err := ctx.GetStub().GetState(id)
@@ -215,38 +219,35 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 }
 
 // FilterAsset filters assets based on a specified field and value
-func (s *SmartContract) FilterAsset(ctx contractapi.TransactionContextInterface, typeFilter, value string) ([]*entity.Transection, error) {
+func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, typeFilter, value string) ([]*entity.TransectionGAP, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
 	}
 	defer resultsIterator.Close()
 
-	var assets []*entity.Transection
+	var assets []*entity.TransectionGAP
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var asset entity.Transection
+		var asset entity.TransectionGAP
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
 			return nil, err
 		}
 
-		// switch typeFilter {
-		// case "OrgName":
-		// 	if asset.OrgName == value {
-		// 		assets = append(assets, &asset)
-		// 	}
-		// case "NationalID":
-		// 	if asset.NationalID == value {
-		// 		assets = append(assets, &asset)
-		// 	}
-		// default:
-		// 	return nil, fmt.Errorf("unsupported filter type: %s", typeFilter)
-		// }
+		v := reflect.ValueOf(asset)
+		field := v.FieldByName(typeFilter)
+		if !field.IsValid() {
+			return nil, fmt.Errorf("invalid filter type: %s", typeFilter)
+		}
+
+		if field.String() == value {
+			assets = append(assets, &asset)
+		}
 	}
 
 	return assets, nil

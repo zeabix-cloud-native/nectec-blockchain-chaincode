@@ -1,8 +1,7 @@
 package entity
 
-type Transection struct {
-	// ID uuid.UUID `json:"id"`
-	ID                string         `json:"id"`
+type TransectionGAP struct {
+	Id                string         `json:"id"`
 	AgriStandard      string         `json:"agriStandard"`
 	FarmOwner         Owner          `json:"farmOwner"`
 	FarmOwnerJuristic JuristicPerson `json:"farmOwnerJuristicPerson"`
