@@ -50,6 +50,7 @@ func (s *SmartContract) CreateAsset(
 	}
 
 	asset := entity.Transection{
+		Id:                  input.Id,
 		Prefix:              input.Prefix,
 		FirstName:           input.FirstName,
 		LastName:            input.LastName,
