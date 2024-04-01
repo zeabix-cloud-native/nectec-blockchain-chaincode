@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"reflect"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/entity"
@@ -35,20 +34,34 @@ func (s *SmartContract) CreateGAP(
 		return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role1")
 	}
 
+	exists, err := s.AssetExists(ctx, input.Id)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("the asset %s already exists", input.Id)
+	}
+
 	clientID, err := s.GetSubmittingClientIdentity(ctx)
 	if err != nil {
 		return err
 	}
 
 	asset := entity.TransectionGAP{
-		Id:                input.Id,
-		AgriStandard:      input.AgriStandard,
-		FarmOwner:         input.FarmOwner,
-		FarmOwnerJuristic: input.FarmOwnerJuristic,
-		FarmLocation:      input.FarmLocation,
-		RegisterPlants:    input.RegisterPlants,
-		Owner:             clientID,
-		OrgName:           orgName,
+		Id:          input.Id,
+		CertID:      input.CertID,
+		AreaCode:    input.AreaCode,
+		AreaSize:    input.AreaSize,
+		AreaStatus:  input.AreaStatus,
+		OldAreaCode: input.OldAreaCode,
+		IssueDate:   input.IssueDate,
+		ExpireDate:  input.ExpireDate,
+		District:    input.District,
+		Province:    input.Province,
+		UpdatedDate: input.UpdatedDate,
+		Source:      input.Source,
+		Owner:       clientID,
+		OrgName:     orgName,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -83,11 +96,17 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	asset.Id = input.Id
-	asset.AgriStandard = input.AgriStandard
-	asset.FarmOwner = input.FarmOwner
-	asset.FarmOwnerJuristic = input.FarmOwnerJuristic
-	asset.FarmLocation = input.FarmLocation
-	asset.RegisterPlants = input.RegisterPlants
+	asset.CertID = input.CertID
+	asset.AreaCode = input.AreaCode
+	asset.AreaSize = input.AreaSize
+	asset.AreaStatus = input.AreaStatus
+	asset.OldAreaCode = input.OldAreaCode
+	asset.IssueDate = input.IssueDate
+	asset.ExpireDate = input.ExpireDate
+	asset.District = input.District
+	asset.Province = input.Province
+	asset.UpdatedDate = input.UpdatedDate
+	asset.Source = input.Source
 
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -218,8 +237,7 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 	return string(decodeID), nil
 }
 
-// FilterAsset filters assets based on a specified field and value
-func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, typeFilter, value string) ([]*entity.TransectionGAP, error) {
+func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, key, value string) ([]*entity.TransectionGAP, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
@@ -239,13 +257,12 @@ func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, t
 			return nil, err
 		}
 
-		v := reflect.ValueOf(asset)
-		field := v.FieldByName(typeFilter)
-		if !field.IsValid() {
-			return nil, fmt.Errorf("invalid filter type: %s", typeFilter)
+		var m map[string]interface{}
+		if err := json.Unmarshal(queryResponse.Value, &m); err != nil {
+			return nil, err
 		}
 
-		if field.String() == value {
+		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
 			assets = append(assets, &asset)
 		}
 	}

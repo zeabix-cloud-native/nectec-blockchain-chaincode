@@ -5,24 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"reflect"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/entity"
 )
 
-// SmartContract provides functions for managing an Asset
 type SmartContract struct {
 	contractapi.Contract
 }
 
-// CreateAsset issues a new asset to the world state with given details.
 func (s *SmartContract) CreateAsset(
 	ctx contractapi.TransactionContextInterface,
 	args string,
 ) error {
 
-	var input entity.Transection
+	var input entity.TransectionFarmer
 
 	errInput := json.Unmarshal([]byte(args), &input)
 
@@ -49,27 +46,11 @@ func (s *SmartContract) CreateAsset(
 		return err
 	}
 
-	asset := entity.Transection{
-		Id:                  input.Id,
-		Prefix:              input.Prefix,
-		FirstName:           input.FirstName,
-		LastName:            input.LastName,
-		NationalID:          input.NationalID,
-		AddressRegistration: input.AddressRegistration,
-		Address:             input.Address,
-		VillageName:         input.VillageName,
-		VillageNo:           input.VillageNo,
-		Road:                input.Road,
-		Alley:               input.Alley,
-		Subdistrict:         input.Subdistrict,
-		District:            input.District,
-		Province:            input.Province,
-		ZipCode:             input.ZipCode,
-		Phone:               input.Phone,
-		MobilePhone:         input.MobilePhone,
-		Email:               input.Email,
-		Owner:               clientID,
-		OrgName:             orgName,
+	asset := entity.TransectionFarmer{
+		Id:      input.Id,
+		CertId:  input.CertId,
+		Owner:   clientID,
+		OrgName: orgName,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -82,7 +63,7 @@ func (s *SmartContract) CreateAsset(
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	args string) error {
 
-	var input entity.Transection
+	var input entity.TransectionFarmer
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
@@ -102,25 +83,8 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	if clientID != asset.Owner {
 		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
 	}
-
 	asset.Id = input.Id
-	asset.Prefix = input.Prefix
-	asset.FirstName = input.FirstName
-	asset.LastName = input.LastName
-	asset.NationalID = input.NationalID
-	asset.AddressRegistration = input.AddressRegistration
-	asset.Address = input.Address
-	asset.VillageName = input.VillageName
-	asset.VillageNo = input.VillageNo
-	asset.Road = input.Road
-	asset.Alley = input.Alley
-	asset.Subdistrict = input.Subdistrict
-	asset.District = input.District
-	asset.Province = input.Province
-	asset.ZipCode = input.ZipCode
-	asset.Phone = input.Phone
-	asset.MobilePhone = input.MobilePhone
-	asset.Email = input.Email
+	asset.CertId = input.CertId
 
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -175,7 +139,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 
-func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*entity.Transection, error) {
+func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*entity.TransectionFarmer, error) {
 
 	assetJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
@@ -185,7 +149,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 		return nil, fmt.Errorf("the asset %s does not exist", id)
 	}
 
-	var asset entity.Transection
+	var asset entity.TransectionFarmer
 	err = json.Unmarshal(assetJSON, &asset)
 	if err != nil {
 		return nil, err
@@ -195,9 +159,8 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	return &asset, nil
 }
 
-func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]*entity.Transection, error) {
+func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface) ([]*entity.TransectionFarmer, error) {
 
-	// Query all assets from the world state
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 
@@ -206,14 +169,14 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 	}
 	defer resultsIterator.Close()
 
-	var assets []*entity.Transection
+	var assets []*entity.TransectionFarmer
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var asset entity.Transection
+		var asset entity.TransectionFarmer
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
 			return nil, err
@@ -252,33 +215,32 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 	return string(decodeID), nil
 }
 
-func (s *SmartContract) FilterFarmer(ctx contractapi.TransactionContextInterface, typeFilter, value string) ([]*entity.Transection, error) {
+func (s *SmartContract) FilterFarmer(ctx contractapi.TransactionContextInterface, key, value string) ([]*entity.TransectionFarmer, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
 	}
 	defer resultsIterator.Close()
 
-	var assets []*entity.Transection
+	var assets []*entity.TransectionFarmer
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var asset entity.Transection
+		var asset entity.TransectionFarmer
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
 			return nil, err
 		}
 
-		v := reflect.ValueOf(asset)
-		field := v.FieldByName(typeFilter)
-		if !field.IsValid() {
-			return nil, fmt.Errorf("invalid filter type: %s", typeFilter)
+		var m map[string]interface{}
+		if err := json.Unmarshal(queryResponse.Value, &m); err != nil {
+			return nil, err
 		}
 
-		if field.String() == value {
+		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
 			assets = append(assets, &asset)
 		}
 	}
