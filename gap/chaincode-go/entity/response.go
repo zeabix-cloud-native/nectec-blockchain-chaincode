@@ -13,6 +13,11 @@ type TransectionReponse struct {
 	Province    string `json:"province"`
 	UpdatedDate string `json:"updatedDate"`
 	Source      string `json:"source"`
-	Owner       string `json:"owner"`
-	OrgName     string `json:"orgName"`
+	// Owner       string `json:"owner"`
+	// OrgName     string `json:"orgName"`
+}
+type GetAllReponse struct {
+	Data  string                `json:"data"`
+	Obj   []*TransectionReponse `json:"obj"`
+	Total int                   `json:"total"`
 }

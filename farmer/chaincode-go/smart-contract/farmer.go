@@ -159,36 +159,69 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	return &asset, nil
 }
 
-func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface) ([]*entity.TransectionFarmer, error) {
+func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface, skip int, limit int) (*entity.GetAllReponse, error) {
+
+	orgName, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return nil, err
+	}
 
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
-	orgName, err := ctx.GetClientIdentity().GetMSPID()
-
 	if err != nil {
 		return nil, err
 	}
 	defer resultsIterator.Close()
 
-	var assets []*entity.TransectionFarmer
+	total := 0
 	for resultsIterator.HasNext() {
-		queryResponse, err := resultsIterator.Next()
+		_, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		total++
+	}
+
+	selector := map[string]interface{}{
+		"selector": map[string]interface{}{
+			"orgName": orgName,
+		},
+		"limit": limit,
+		"skip":  skip,
+	}
+
+	queryString, err := json.Marshal(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryString), int32(limit), "")
+	if err != nil {
+		return nil, err
+	}
+	defer queryResults.Close()
+
+	var assets []*entity.TransectionReponse
+
+	for queryResults.HasNext() {
+		queryResponse, err := queryResults.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var asset entity.TransectionFarmer
+		var asset entity.TransectionReponse
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
 			return nil, err
 		}
 
-		// Check if the asset belongs to Org1MSP
-		if asset.OrgName == orgName {
-			assets = append(assets, &asset)
-		}
+		assets = append(assets, &asset)
 	}
 
-	return assets, nil
+	return &entity.GetAllReponse{
+		Data:  "All Farmer",
+		Obj:   assets,
+		Total: total,
+	}, nil
 }
 
 // AssetExists returns true when asset with given ID exists in world state
