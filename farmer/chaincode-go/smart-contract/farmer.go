@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/entity"
@@ -159,12 +160,22 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	return &asset, nil
 }
 
-func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface, skip int, limit int) (*entity.GetAllReponse, error) {
+func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
 		return nil, err
 	}
+
+	var input entity.Pagination
+	errInput := json.Unmarshal([]byte(args), &input)
+
+	if errInput != nil {
+		return nil, fmt.Errorf("Unmarshal json string")
+	}
+
+	limit, _ := strconv.Atoi(input.Limit)
+	skip, _ := strconv.Atoi(input.Skip)
 
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
