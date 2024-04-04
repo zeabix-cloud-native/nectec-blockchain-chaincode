@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/entity"
@@ -197,8 +196,8 @@ func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface, a
 		return nil, fmt.Errorf("Unmarshal json string")
 	}
 
-	limit, _ := strconv.Atoi(input.Limit)
-	skip, _ := strconv.Atoi(input.Skip)
+	limit := input.Limit
+	skip := input.Skip
 
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {

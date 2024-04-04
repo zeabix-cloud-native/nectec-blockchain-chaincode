@@ -8,6 +8,6 @@ type TransectionFarmer struct {
 }
 
 type Pagination struct {
-	Skip  string `json:"skip"`
-	Limit string `json:"limit"`
+	Skip  int `json:"skip"`
+	Limit int `json:"limit"`
 }

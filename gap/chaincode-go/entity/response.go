@@ -16,6 +16,7 @@ type TransectionReponse struct {
 	// Owner       string `json:"owner"`
 	// OrgName     string `json:"orgName"`
 }
+
 type GetAllReponse struct {
 	Data  string                `json:"data"`
 	Obj   []*TransectionReponse `json:"obj"`
