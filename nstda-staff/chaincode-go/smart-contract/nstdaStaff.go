@@ -1,4 +1,4 @@
-package packing
+package nstdaStaff
 
 import (
 	"encoding/base64"
@@ -7,19 +7,19 @@ import (
 	"log"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/packing/chaincode-go/entity"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/nstda-staff/chaincode-go/entity"
 )
 
 type SmartContract struct {
 	contractapi.Contract
 }
 
-func (s *SmartContract) CreatePacking(
+func (s *SmartContract) CreateNstdaStaff(
 	ctx contractapi.TransactionContextInterface,
 	args string,
 ) error {
 
-	var input entity.TransectionPacking
+	var input entity.TransectionNstdaStaff
 
 	errInput := json.Unmarshal([]byte(args), &input)
 
@@ -27,10 +27,10 @@ func (s *SmartContract) CreatePacking(
 		return fmt.Errorf("Unmarshal json string")
 	}
 
-	err := ctx.GetClientIdentity().AssertAttributeValue("packing.creator", "true")
+	err := ctx.GetClientIdentity().AssertAttributeValue("nstdaStaff.creator", "true")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
-		return fmt.Errorf("submitting client not authorized to create asset, does not have packing.creator role")
+		return fmt.Errorf("submitting client not authorized to create asset, does not have nstdaStaff.creator role")
 	}
 
 	exists, err := s.AssetExists(ctx, input.Id)
@@ -46,19 +46,11 @@ func (s *SmartContract) CreatePacking(
 		return err
 	}
 
-	asset := entity.TransectionPacking{
-		Id:             input.Id,
-		OrderID:        input.OrderID,
-		FarmerID:       input.FarmerID,
-		ForecastWeight: input.ForecastWeight,
-		ActualWeight:   input.ActualWeight,
-		IsPackerSaved:  input.IsPackerSaved,
-		SavedTime:      input.SavedTime,
-		IsApproved:     input.IsApproved,
-		ApprovedDate:   input.ApprovedDate,
-		ApprovedType:   input.ApprovedType,
-		Owner:          clientID,
-		OrgName:        orgName,
+	asset := entity.TransectionNstdaStaff{
+		Id:      input.Id,
+		CertId:  input.CertId,
+		Owner:   clientID,
+		OrgName: orgName,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -71,7 +63,7 @@ func (s *SmartContract) CreatePacking(
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	args string) error {
 
-	var input entity.TransectionPacking
+	var input entity.TransectionNstdaStaff
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
@@ -92,15 +84,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
 	}
 	asset.Id = input.Id
-	asset.OrderID = input.OrderID
-	asset.FarmerID = input.FarmerID
-	asset.ForecastWeight = input.ForecastWeight
-	asset.ActualWeight = input.ActualWeight
-	asset.IsPackerSaved = input.IsPackerSaved
-	asset.SavedTime = input.SavedTime
-	asset.IsApproved = input.IsApproved
-	asset.ApprovedDate = input.ApprovedDate
-	asset.ApprovedType = input.ApprovedType
+	asset.CertId = input.CertId
 
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -155,7 +139,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 
-func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*entity.TransectionPacking, error) {
+func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*entity.TransectionNstdaStaff, error) {
 
 	assetJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
@@ -165,17 +149,17 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 		return nil, fmt.Errorf("the asset %s does not exist", id)
 	}
 
-	var asset entity.TransectionPacking
+	var asset entity.TransectionNstdaStaff
 	err = json.Unmarshal(assetJSON, &asset)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Error creating farmer chaincode: %#c", asset)
+	log.Printf("Error creating nstda staff chaincode: %#c", asset)
 
 	return &asset, nil
 }
 
-func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
+func (s *SmartContract) GetAllNstdaStaff(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
@@ -248,7 +232,7 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 	}
 
 	return &entity.GetAllReponse{
-		Data:  "All Packing",
+		Data:  "All NstdaStaff",
 		Obj:   assets,
 		Total: total,
 	}, nil
@@ -278,21 +262,21 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 	return string(decodeID), nil
 }
 
-func (s *SmartContract) FilterPacking(ctx contractapi.TransactionContextInterface, key, value string) ([]*entity.TransectionPacking, error) {
+func (s *SmartContract) FilterNstdaStaff(ctx contractapi.TransactionContextInterface, key, value string) ([]*entity.TransectionNstdaStaff, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
 	}
 	defer resultsIterator.Close()
 
-	var assets []*entity.TransectionPacking
+	var assets []*entity.TransectionNstdaStaff
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var asset entity.TransectionPacking
+		var asset entity.TransectionNstdaStaff
 		err = json.Unmarshal(queryResponse.Value, &asset)
 		if err != nil {
 			return nil, err
