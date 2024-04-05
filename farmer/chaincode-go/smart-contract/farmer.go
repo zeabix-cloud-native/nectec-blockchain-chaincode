@@ -227,6 +227,10 @@ func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface
 		assets = append(assets, &asset)
 	}
 
+	if len(assets) == 0 {
+		assets = []*entity.TransectionReponse{}
+	}
+
 	return &entity.GetAllReponse{
 		Data:  "All Farmer",
 		Obj:   assets,

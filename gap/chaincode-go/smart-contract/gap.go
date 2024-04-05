@@ -250,6 +250,10 @@ func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface, a
 		assets = append(assets, &asset)
 	}
 
+	if len(assets) == 0 {
+		assets = []*entity.TransectionReponse{}
+	}
+
 	return &entity.GetAllReponse{
 		Data:  "All Gap",
 		Obj:   assets,
