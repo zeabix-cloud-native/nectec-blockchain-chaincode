@@ -316,3 +316,70 @@ func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, k
 
 	return assets, nil
 }
+
+func (s *SmartContract) CreateGapCsv(
+	ctx contractapi.TransactionContextInterface,
+	args string,
+) error {
+	var inputs []entity.TransectionGAP
+
+	errInput := json.Unmarshal([]byte(args), &inputs)
+	if errInput != nil {
+		return fmt.Errorf("failed to unmarshal JSON array: %v", errInput)
+	}
+
+	for _, input := range inputs {
+		err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
+		if err != nil {
+			return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role1: %v", err)
+		}
+
+		orgName, err := ctx.GetClientIdentity().GetMSPID()
+		if err != nil {
+			return fmt.Errorf("failed to get submitting client's MSP ID: %v", err)
+		}
+
+		exists, err := s.AssetExists(ctx, input.Id)
+		if err != nil {
+			return fmt.Errorf("error checking if asset exists: %v", err)
+		}
+		if exists {
+			return fmt.Errorf("the asset %s already exists", input.Id)
+		}
+
+		clientID, err := s.GetSubmittingClientIdentity(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get submitting client's identity: %v", err)
+		}
+
+		asset := entity.TransectionGAP{
+			Id:          input.Id,
+			CertID:      input.CertID,
+			AreaCode:    input.AreaCode,
+			AreaRai:     input.AreaRai,
+			AreaStatus:  input.AreaStatus,
+			OldAreaCode: input.OldAreaCode,
+			IssueDate:   input.IssueDate,
+			ExpireDate:  input.ExpireDate,
+			District:    input.District,
+			Province:    input.Province,
+			UpdatedDate: input.UpdatedDate,
+			Source:      input.Source,
+			Owner:       clientID,
+			OrgName:     orgName,
+		}
+		assetJSON, err := json.Marshal(asset)
+		if err != nil {
+			return fmt.Errorf("failed to marshal asset JSON: %v", err)
+		}
+
+		err = ctx.GetStub().PutState(input.Id, assetJSON)
+		if err != nil {
+			return fmt.Errorf("failed to put state for asset %s: %v", input.Id, err)
+		}
+
+		fmt.Printf("Asset %s created successfully\n", input.Id)
+	}
+
+	return nil
+}
