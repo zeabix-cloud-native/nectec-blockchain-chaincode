@@ -51,7 +51,7 @@ func (s *SmartContract) CreateGAP(
 		Id:          input.Id,
 		CertID:      input.CertID,
 		AreaCode:    input.AreaCode,
-		AreaSize:    input.AreaSize,
+		AreaRai:     input.AreaRai,
 		AreaStatus:  input.AreaStatus,
 		OldAreaCode: input.OldAreaCode,
 		IssueDate:   input.IssueDate,
@@ -98,7 +98,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.Id = input.Id
 	asset.CertID = input.CertID
 	asset.AreaCode = input.AreaCode
-	asset.AreaSize = input.AreaSize
+	asset.AreaRai = input.AreaRai
 	asset.AreaStatus = input.AreaStatus
 	asset.OldAreaCode = input.OldAreaCode
 	asset.IssueDate = input.IssueDate

@@ -4,7 +4,7 @@ type TransectionReponse struct {
 	Id          string `json:"id"`
 	CertID      string `json:"certId"`
 	AreaCode    string `json:"areaCode"`
-	AreaSize    string `json:"areaSize"`
+	AreaRai     string `json:"areaRai"`
 	AreaStatus  string `json:"areaStatus"`
 	OldAreaCode string `json:"oldAreaCode"`
 	IssueDate   string `json:"issueDate"`
@@ -13,8 +13,6 @@ type TransectionReponse struct {
 	Province    string `json:"province"`
 	UpdatedDate string `json:"updatedDate"`
 	Source      string `json:"source"`
-	// Owner       string `json:"owner"`
-	// OrgName     string `json:"orgName"`
 }
 
 type GetAllReponse struct {
