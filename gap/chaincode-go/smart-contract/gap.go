@@ -329,10 +329,10 @@ func (s *SmartContract) CreateGapCsv(
 	}
 
 	for _, input := range inputs {
-		err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
-		if err != nil {
-			return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role1: %v", err)
-		}
+		// err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
+		// if err != nil {
+		// 	return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role1: %v", err)
+		// }
 
 		orgName, err := ctx.GetClientIdentity().GetMSPID()
 		if err != nil {
