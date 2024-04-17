@@ -288,7 +288,7 @@ func (s *SmartContract) FilterExporter(ctx contractapi.TransactionContextInterfa
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assets = append([]*entity.TransectionExporter{&asset}, assets...)
 		}
 	}
 

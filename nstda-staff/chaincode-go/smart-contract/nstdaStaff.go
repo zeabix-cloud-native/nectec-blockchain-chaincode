@@ -288,7 +288,7 @@ func (s *SmartContract) FilterNstdaStaff(ctx contractapi.TransactionContextInter
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assets = append([]*entity.TransectionNstdaStaff{&asset}, assets...)
 		}
 	}
 

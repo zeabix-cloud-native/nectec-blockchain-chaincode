@@ -288,7 +288,7 @@ func (s *SmartContract) FilterPacker(ctx contractapi.TransactionContextInterface
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assets = append([]*entity.TransectionPacker{&asset}, assets...)
 		}
 	}
 

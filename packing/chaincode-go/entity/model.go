@@ -8,7 +8,7 @@ type TransectionPacking struct {
 	ActualWeight   string `json:"actualWeight"`
 	IsPackerSaved  bool   `json:"isPackerSaved"`
 	SavedTime      string `json:"savedTime"`
-	IsApproved     bool   `json:"isApproved"`
+	IsApproved     bool   `json:"isApproved"` // update status
 	ApprovedDate   string `json:"approvedDate"`
 	ApprovedType   string `json:"approvedType"`
 	Owner          string `json:"owner"`

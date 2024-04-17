@@ -310,7 +310,7 @@ func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, k
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assets = append([]*entity.TransectionGAP{&asset}, assets...)
 		}
 	}
 

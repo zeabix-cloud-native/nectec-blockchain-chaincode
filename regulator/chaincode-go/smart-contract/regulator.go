@@ -288,7 +288,7 @@ func (s *SmartContract) FilterRegulator(ctx contractapi.TransactionContextInterf
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assets = append([]*entity.TransectionRegulator{&asset}, assets...)
 		}
 	}
 

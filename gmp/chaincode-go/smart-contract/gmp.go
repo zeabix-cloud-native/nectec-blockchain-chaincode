@@ -292,7 +292,7 @@ func (s *SmartContract) FilterGmp(ctx contractapi.TransactionContextInterface, k
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assets = append([]*entity.TransectionGMP{&asset}, assets...)
 		}
 	}
 
