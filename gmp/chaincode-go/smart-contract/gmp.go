@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sort"
+	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gmp/chaincode-go/entity"
@@ -47,12 +49,17 @@ func (s *SmartContract) CreateGMP(
 		return err
 	}
 
+	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
+	CreatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+
 	asset := entity.TransectionGMP{
 		Id:                         input.Id,
 		PackingHouseRegisterNumber: input.PackingHouseRegisterNumber,
 		Address:                    input.Address,
 		Owner:                      clientID,
 		OrgName:                    orgName,
+		UpdatedAt:                  CreatedAt,
+		CreatedAt:                  CreatedAt,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -86,9 +93,13 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
 	}
 
+	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
+	UpdatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+
 	asset.Id = input.Id
 	asset.PackingHouseRegisterNumber = input.PackingHouseRegisterNumber
 	asset.Address = input.Address
+	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -231,6 +242,10 @@ func (s *SmartContract) GetAllGMP(ctx contractapi.TransactionContextInterface, a
 
 		assets = append(assets, &asset)
 	}
+
+	sort.Slice(assets, func(i, j int) bool {
+		return assets[i].UpdatedAt.Before(assets[j].UpdatedAt)
+	})
 
 	if len(assets) == 0 {
 		assets = []*entity.TransectionReponse{}

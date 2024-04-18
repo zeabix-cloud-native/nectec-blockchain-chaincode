@@ -253,7 +253,6 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 		assets = append(assets, &asset)
 	}
 
-	// Sort assets by updatedAt in ascending order
 	sort.Slice(assets, func(i, j int) bool {
 		return assets[i].UpdatedAt.Before(assets[j].UpdatedAt)
 	})

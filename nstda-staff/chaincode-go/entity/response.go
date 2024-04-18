@@ -1,8 +1,12 @@
 package entity
 
+import "time"
+
 type TransectionReponse struct {
-	Id     string `json:"id"`
-	CertId string `json:"certId"`
+	Id        string    `json:"id"`
+	CertId    string    `json:"certId"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type GetAllReponse struct {
