@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sort"
+	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/packing/chaincode-go/entity"
@@ -46,6 +48,9 @@ func (s *SmartContract) CreatePacking(
 		return err
 	}
 
+	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
+	CreatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+
 	asset := entity.TransectionPacking{
 		Id:             input.Id,
 		OrderID:        input.OrderID,
@@ -59,6 +64,8 @@ func (s *SmartContract) CreatePacking(
 		ApprovedType:   input.ApprovedType,
 		Owner:          clientID,
 		OrgName:        orgName,
+		UpdatedAt:      CreatedAt,
+		CreatedAt:      CreatedAt,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -91,6 +98,10 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	if clientID != asset.Owner {
 		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
 	}
+
+	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
+	UpdatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+
 	asset.Id = input.Id
 	asset.OrderID = input.OrderID
 	asset.FarmerID = input.FarmerID
@@ -101,6 +112,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.IsApproved = input.IsApproved
 	asset.ApprovedDate = input.ApprovedDate
 	asset.ApprovedType = input.ApprovedType
+	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -165,7 +177,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 		return nil, fmt.Errorf("the asset %s does not exist", id)
 	}
 
-	var asset entity.TransectionPacking
+	var asset entity.TransectionReponse
 	err = json.Unmarshal(assetJSON, &asset)
 	if err != nil {
 		return nil, err
@@ -174,7 +186,6 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 
 	return &asset, nil
 }
-
 func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
@@ -184,7 +195,6 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 
 	var input entity.Pagination
 	errInput := json.Unmarshal([]byte(args), &input)
-
 	if errInput != nil {
 		return nil, fmt.Errorf("Unmarshal json string")
 	}
@@ -242,6 +252,11 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 
 		assets = append(assets, &asset)
 	}
+
+	// Sort assets by updatedAt in ascending order
+	sort.Slice(assets, func(i, j int) bool {
+		return assets[i].UpdatedAt.Before(assets[j].UpdatedAt)
+	})
 
 	if len(assets) == 0 {
 		assets = []*entity.TransectionReponse{}
