@@ -177,7 +177,7 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 		return nil, fmt.Errorf("the asset %s does not exist", id)
 	}
 
-	var asset entity.TransectionReponse
+	var asset entity.TransectionPacking
 	err = json.Unmarshal(assetJSON, &asset)
 	if err != nil {
 		return nil, err
