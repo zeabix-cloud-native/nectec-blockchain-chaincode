@@ -62,6 +62,8 @@ func (s *SmartContract) CreatePacking(
 		IsApproved:     input.IsApproved,
 		ApprovedDate:   input.ApprovedDate,
 		ApprovedType:   input.ApprovedType,
+		FinalWeight:    input.FinalWeight,
+		Remark:         input.Remark,
 		Owner:          clientID,
 		OrgName:        orgName,
 		UpdatedAt:      CreatedAt,
@@ -112,6 +114,8 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.IsApproved = input.IsApproved
 	asset.ApprovedDate = input.ApprovedDate
 	asset.ApprovedType = input.ApprovedType
+	asset.FinalWeight = input.FinalWeight
+	asset.Remark = input.Remark
 	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)

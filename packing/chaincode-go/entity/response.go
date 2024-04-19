@@ -6,13 +6,15 @@ type TransectionReponse struct {
 	Id             string    `json:"id"`
 	OrderID        string    `json:"orderId"`
 	FarmerID       string    `json:"farmerId"`
-	ForecastWeight string    `json:"forecastWeight"`
-	ActualWeight   string    `json:"actualWeight"`
+	ForecastWeight float32   `json:"forecastWeight"`
+	ActualWeight   float32   `json:"actualWeight"`
 	IsPackerSaved  bool      `json:"isPackerSaved"`
 	SavedTime      string    `json:"savedTime"`
 	IsApproved     bool      `json:"isApproved"`
 	ApprovedDate   string    `json:"approvedDate"`
 	ApprovedType   string    `json:"approvedType"`
+	FinalWeight    float32   `json:"finalWeight"`
+	Remark         string    `json:"remark"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 	CreatedAt      time.Time `json:"createdAt"`
 }
