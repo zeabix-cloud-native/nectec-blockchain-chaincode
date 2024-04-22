@@ -322,9 +322,13 @@ func (s *SmartContract) FilterPacking(ctx contractapi.TransactionContextInterfac
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append([]*entity.TransectionPacking{&asset}, assets...)
+			assets = append(assets, &asset)
 		}
 	}
+
+	sort.Slice(assets, func(i, j int) bool {
+		return assets[i].UpdatedAt.After(assets[j].UpdatedAt)
+	})
 
 	return assets, nil
 }
