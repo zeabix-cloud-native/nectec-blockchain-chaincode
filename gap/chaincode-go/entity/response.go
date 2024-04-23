@@ -15,6 +15,7 @@ type TransectionReponse struct {
 	Province    string    `json:"province"`
 	UpdatedDate string    `json:"updatedDate"`
 	Source      string    `json:"source"`
+	FarmerID    string    `json:"farmerId"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 	CreatedAt   time.Time `json:"createdAt"`
 }

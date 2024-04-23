@@ -15,6 +15,7 @@ type TransectionGAP struct {
 	Province    string    `json:"province"`
 	UpdatedDate string    `json:"updatedDate"`
 	Source      string    `json:"source"`
+	FarmerID    string    `json:"farmerId"`
 	Owner       string    `json:"owner"`
 	OrgName     string    `json:"orgName"`
 	UpdatedAt   time.Time `json:"updatedAt"`

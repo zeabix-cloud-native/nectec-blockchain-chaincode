@@ -65,6 +65,7 @@ func (s *SmartContract) CreateGAP(
 		Province:    input.Province,
 		UpdatedDate: input.UpdatedDate,
 		Source:      input.Source,
+		FarmerID:    input.FarmerID,
 		Owner:       clientID,
 		OrgName:     orgName,
 		UpdatedAt:   CreatedAt,
@@ -117,6 +118,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.Province = input.Province
 	asset.UpdatedDate = input.UpdatedDate
 	asset.Source = input.Source
+	asset.FarmerID = input.FarmerID
 	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)
@@ -384,6 +386,7 @@ func (s *SmartContract) CreateGapCsv(
 			Province:    input.Province,
 			UpdatedDate: input.UpdatedDate,
 			Source:      input.Source,
+			FarmerID:    input.FarmerID,
 			Owner:       clientID,
 			OrgName:     orgName,
 		}
