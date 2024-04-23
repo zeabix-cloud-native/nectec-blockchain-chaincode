@@ -325,9 +325,13 @@ func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, k
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append([]*entity.TransectionGAP{&asset}, assets...)
+			assets = append(assets, &asset)
 		}
 	}
+
+	sort.Slice(assets, func(i, j int) bool {
+		return assets[i].UpdatedAt.After(assets[j].UpdatedAt)
+	})
 
 	return assets, nil
 }

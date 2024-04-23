@@ -303,9 +303,13 @@ func (s *SmartContract) FilterRegulator(ctx contractapi.TransactionContextInterf
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append([]*entity.TransectionRegulator{&asset}, assets...)
+			assets = append(assets, &asset)
 		}
 	}
+
+	sort.Slice(assets, func(i, j int) bool {
+		return assets[i].UpdatedAt.After(assets[j].UpdatedAt)
+	})
 
 	return assets, nil
 }
