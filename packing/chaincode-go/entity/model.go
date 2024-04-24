@@ -15,6 +15,8 @@ type TransectionPacking struct {
 	ApprovedType   string    `json:"approvedType"`
 	FinalWeight    float32   `json:"finalWeight"`
 	Remark         string    `json:"remark"`
+	PackerId       string    `json:"packerId"`
+	Gmp            string    `json:"gmp"`
 	Owner          string    `json:"owner"`
 	OrgName        string    `json:"orgName"`
 	UpdatedAt      time.Time `json:"updatedAt"`

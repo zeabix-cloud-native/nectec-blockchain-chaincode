@@ -15,6 +15,8 @@ type TransectionReponse struct {
 	ApprovedType   string    `json:"approvedType"`
 	FinalWeight    float32   `json:"finalWeight"`
 	Remark         string    `json:"remark"`
+	PackerId       string    `json:"packerId"`
+	Gmp            string    `json:"gmp"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 	CreatedAt      time.Time `json:"createdAt"`
 }

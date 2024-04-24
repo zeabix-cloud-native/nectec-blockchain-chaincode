@@ -64,6 +64,8 @@ func (s *SmartContract) CreatePacking(
 		ApprovedType:   input.ApprovedType,
 		FinalWeight:    input.FinalWeight,
 		Remark:         input.Remark,
+		PackerId:       input.PackerId,
+		Gmp:            input.Gmp,
 		Owner:          clientID,
 		OrgName:        orgName,
 		UpdatedAt:      CreatedAt,
@@ -116,6 +118,8 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.ApprovedType = input.ApprovedType
 	asset.FinalWeight = input.FinalWeight
 	asset.Remark = input.Remark
+	asset.PackerId = input.PackerId
+	asset.Gmp = input.Gmp
 	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)
