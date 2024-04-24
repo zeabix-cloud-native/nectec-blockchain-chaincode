@@ -332,17 +332,23 @@ func (s *SmartContract) GetHistoryForKey(ctx contractapi.TransactionContextInter
 		}
 
 		var asset entity.TransectionReponse
-		err = json.Unmarshal(record.Value, &asset)
-		if err != nil {
-			return nil, err
-		}
+		if !record.IsDelete {
+			err = json.Unmarshal(record.Value, &asset)
+			if err != nil {
+				return nil, err
+			}
+			assetsValue = append(assetsValue, &asset)
 
-		assetsValue = append(assetsValue, &asset)
+		} else {
+			assetsValue = []*entity.TransectionReponse{}
+		}
+		// Convert the timestamp to string in the desired format
+		timestampStr := time.Unix(record.Timestamp.Seconds, int64(record.Timestamp.Nanos)).Format("2006-01-02T15:04:05Z")
 
 		historyRecord := &entity.TransactionHistory{
 			TxId:      record.TxId,
 			Value:     assetsValue,
-			Timestamp: record.Timestamp.String(),
+			Timestamp: timestampStr,
 			IsDelete:  record.IsDelete,
 		}
 
