@@ -94,13 +94,8 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
-
-	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+	if asset.FarmerID != input.FarmerID || asset.PackerId != input.PackerId {
+		return fmt.Errorf("FarmerID or PackerId not match")
 	}
 
 	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
@@ -108,7 +103,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 
 	asset.Id = input.Id
 	asset.OrderID = input.OrderID
-	asset.FarmerID = input.FarmerID
+	asset.FarmerID = input.FarmerID // not update
 	asset.ForecastWeight = input.ForecastWeight
 	asset.ActualWeight = input.ActualWeight
 	asset.IsPackerSaved = input.IsPackerSaved
@@ -118,7 +113,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.ApprovedType = input.ApprovedType
 	asset.FinalWeight = input.FinalWeight
 	asset.Remark = input.Remark
-	asset.PackerId = input.PackerId
+	asset.PackerId = input.PackerId // not update
 	asset.Gmp = input.Gmp
 	asset.UpdatedAt = UpdatedAt
 
