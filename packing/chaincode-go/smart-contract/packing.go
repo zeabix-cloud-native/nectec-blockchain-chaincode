@@ -191,11 +191,6 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 }
 func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	orgName, err := ctx.GetClientIdentity().GetMSPID()
-	if err != nil {
-		return nil, err
-	}
-
 	var input entity.FilterGetAll
 	errInput := json.Unmarshal([]byte(args), &input)
 	if errInput != nil {
@@ -208,38 +203,41 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 
 	limit := input.Limit
 	skip := input.Skip
+	packerId := input.PackerId
 
-	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	selectorPacker := map[string]interface{}{
+		"selector": map[string]interface{}{
+			"packerId": packerId,
+		},
+	}
+
+	queryStringPacker, err := json.Marshal(selectorPacker)
+	if err != nil {
+		return nil, err
+	}
+
+	resultsIterator, err := ctx.GetStub().GetQueryResult(string(queryStringPacker))
 	if err != nil {
 		return nil, err
 	}
 	defer resultsIterator.Close()
 
-	total := 0
 	totalWithPackerId := 0
 
 	for resultsIterator.HasNext() {
-		queryResponse, err := resultsIterator.Next()
+		_, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
 		}
-
-		var asset entity.TransectionReponse
-		err = json.Unmarshal(queryResponse.Value, &asset)
-
-		if err != nil {
-			return nil, err
-		}
-
-		if asset.PackerId == input.PackerId {
-			totalWithPackerId++
-		}
-		total++
+		totalWithPackerId++
+	}
+	if input.Skip > totalWithPackerId {
+		return nil, fmt.Errorf("Skip Over Total Data")
 	}
 
 	selector := map[string]interface{}{
 		"selector": map[string]interface{}{
-			"orgName": orgName,
+			"packerId": packerId,
 		},
 		"limit": limit,
 		"skip":  skip,
@@ -270,9 +268,9 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 			return nil, err
 		}
 
-		if asset.PackerId == input.PackerId {
-			assets = append(assets, &asset)
-		}
+		// if asset.PackerId == input.PackerId {
+		assets = append(assets, &asset)
+		// }
 	}
 
 	sort.Slice(assets, func(i, j int) bool {
