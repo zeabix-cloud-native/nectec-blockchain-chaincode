@@ -196,10 +196,14 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 		return nil, err
 	}
 
-	var input entity.Pagination
+	var input entity.FilterGetAll
 	errInput := json.Unmarshal([]byte(args), &input)
 	if errInput != nil {
 		return nil, fmt.Errorf("Unmarshal json string")
+	}
+
+	if input.PackerId == "" {
+		return nil, fmt.Errorf("PackerId field is missing or invalid")
 	}
 
 	limit := input.Limit
@@ -212,10 +216,23 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 	defer resultsIterator.Close()
 
 	total := 0
+	totalWithPackerId := 0
+
 	for resultsIterator.HasNext() {
-		_, err := resultsIterator.Next()
+		queryResponse, err := resultsIterator.Next()
 		if err != nil {
 			return nil, err
+		}
+
+		var asset entity.TransectionReponse
+		err = json.Unmarshal(queryResponse.Value, &asset)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if asset.PackerId == input.PackerId {
+			totalWithPackerId++
 		}
 		total++
 	}
@@ -253,7 +270,9 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 			return nil, err
 		}
 
-		assets = append(assets, &asset)
+		if asset.PackerId == input.PackerId {
+			assets = append(assets, &asset)
+		}
 	}
 
 	sort.Slice(assets, func(i, j int) bool {
@@ -267,7 +286,7 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 	return &entity.GetAllReponse{
 		Data:  "All Packing",
 		Obj:   assets,
-		Total: total,
+		Total: totalWithPackerId,
 	}, nil
 }
 
