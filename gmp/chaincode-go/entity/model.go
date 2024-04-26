@@ -16,3 +16,10 @@ type Pagination struct {
 	Skip  int `json:"skip"`
 	Limit int `json:"limit"`
 }
+
+type FilterGetAll struct {
+	Skip                       int     `json:"skip"`
+	Limit                      int     `json:"limit"`
+	PackingHouseRegisterNumber *string `json:"packingHouseRegisterNumber"`
+	Address                    *string `json:"address"`
+}

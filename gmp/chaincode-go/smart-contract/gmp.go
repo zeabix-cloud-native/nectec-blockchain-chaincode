@@ -177,42 +177,27 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 
 func (s *SmartContract) GetAllGMP(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	orgName, err := ctx.GetClientIdentity().GetMSPID()
-	if err != nil {
-		return nil, err
-	}
+	var input entity.FilterGetAll
+	var filter = map[string]interface{}{}
 
-	var input entity.Pagination
 	errInput := json.Unmarshal([]byte(args), &input)
-
 	if errInput != nil {
 		return nil, fmt.Errorf("Unmarshal json string")
+	}
+
+	if input.PackingHouseRegisterNumber != nil {
+		filter["packingHouseRegisterNumber"] = input.PackingHouseRegisterNumber
+	}
+
+	if input.Address != nil {
+		filter["address"] = input.Address
 	}
 
 	limit := input.Limit
 	skip := input.Skip
 
-	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
-	if err != nil {
-		return nil, err
-	}
-	defer resultsIterator.Close()
-
-	total := 0
-	for resultsIterator.HasNext() {
-		_, err := resultsIterator.Next()
-		if err != nil {
-			return nil, err
-		}
-		total++
-	}
-
 	selector := map[string]interface{}{
-		"selector": map[string]interface{}{
-			"orgName": orgName,
-		},
-		"limit": limit,
-		"skip":  skip,
+		"selector": filter,
 	}
 
 	queryString, err := json.Marshal(selector)
@@ -220,7 +205,36 @@ func (s *SmartContract) GetAllGMP(ctx contractapi.TransactionContextInterface, a
 		return nil, err
 	}
 
-	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryString), int32(limit), "")
+	resultsIterator, err := ctx.GetStub().GetQueryResult(string(queryString))
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	total := 0
+
+	for resultsIterator.HasNext() {
+		_, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		total++
+	}
+	if skip > total {
+		return nil, fmt.Errorf("Skip Over Total Data")
+	}
+	// Check if skip and limit are provided in the args
+	if skip != 0 || limit != 0 {
+		selector["skip"] = skip
+		selector["limit"] = limit
+	}
+
+	queryStringPagination, err := json.Marshal(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryStringPagination), int32(limit), "")
 	if err != nil {
 		return nil, err
 	}
