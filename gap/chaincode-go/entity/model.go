@@ -6,7 +6,7 @@ type TransectionGAP struct {
 	Id          string    `json:"id"`
 	CertID      string    `json:"certId"`
 	AreaCode    string    `json:"areaCode"`
-	AreaRai     string    `json:"areaRai"`
+	AreaRai     float32   `json:"areaRai"`
 	AreaStatus  string    `json:"areaStatus"`
 	OldAreaCode string    `json:"oldAreaCode"`
 	IssueDate   string    `json:"issueDate"`
@@ -22,7 +22,15 @@ type TransectionGAP struct {
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
-type Pagination struct {
-	Skip  int `json:"skip"`
-	Limit int `json:"limit"`
+type FilterGetAll struct {
+	Skip        int      `json:"skip"`
+	Limit       int      `json:"limit"`
+	CertID      *string  `json:"certId"`
+	AreaCode    *string  `json:"areaCode"`
+	District    *string  `json:"district"`
+	Province    *string  `json:"province"`
+	AreaRaiFrom *float32 `json:"areaRaiFrom"`
+	AreaRaiTo   *float32 `json:"areaRaiTo"`
+	IssueDate   *string  `json:"issueDate"`
+	ExpireDate  *string  `json:"expireDate"`
 }

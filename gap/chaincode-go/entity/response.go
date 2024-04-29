@@ -6,7 +6,7 @@ type TransectionReponse struct {
 	Id          string    `json:"id"`
 	CertID      string    `json:"certId"`
 	AreaCode    string    `json:"areaCode"`
-	AreaRai     string    `json:"areaRai"`
+	AreaRai     float32   `json:"areaRai"`
 	AreaStatus  string    `json:"areaStatus"`
 	OldAreaCode string    `json:"oldAreaCode"`
 	IssueDate   string    `json:"issueDate"`
