@@ -4,6 +4,7 @@ import "time"
 
 type TransectionReponse struct {
 	Id                         string    `json:"id"`
+	Name                       string    `json:"name"`
 	PackingHouseRegisterNumber string    `json:"packingHouseRegisterNumber"`
 	Address                    string    `json:"address"`
 	UpdatedAt                  time.Time `json:"updatedAt"`
