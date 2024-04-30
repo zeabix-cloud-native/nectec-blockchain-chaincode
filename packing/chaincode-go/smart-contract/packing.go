@@ -199,10 +199,8 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 		return nil, fmt.Errorf("Unmarshal json string")
 	}
 
-	if input.PackerId == "" {
-		return nil, fmt.Errorf("PackerId field is missing or invalid")
-	} else {
-		filter["packerId"] = input.PackerId
+	if input.PackerId != nil {
+		filter["packerId"] = *input.PackerId
 	}
 
 	limit := input.Limit

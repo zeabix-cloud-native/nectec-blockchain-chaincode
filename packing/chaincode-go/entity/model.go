@@ -24,7 +24,7 @@ type TransectionPacking struct {
 }
 
 type FilterGetAll struct {
-	Skip     int    `json:"skip"`
-	Limit    int    `json:"limit"`
-	PackerId string `json:"packerId"`
+	Skip     int     `json:"skip"`
+	Limit    int     `json:"limit"`
+	PackerId *string `json:"packerId"`
 }
