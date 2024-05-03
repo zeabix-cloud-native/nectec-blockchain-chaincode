@@ -122,6 +122,8 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return err
 	}
 
+	ctx.GetStub().SetEvent("UpdateAsset", assetJSON)
+
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
