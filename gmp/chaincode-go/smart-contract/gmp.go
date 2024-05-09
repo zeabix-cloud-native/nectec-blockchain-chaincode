@@ -54,7 +54,6 @@ func (s *SmartContract) CreateGMP(
 
 	asset := entity.TransectionGMP{
 		Id:                         input.Id,
-		Name:                       input.Name,
 		PackingHouseRegisterNumber: input.PackingHouseRegisterNumber,
 		Address:                    input.Address,
 		PackingHouseName:           input.PackingHouseName,
@@ -101,7 +100,6 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	UpdatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
 
 	asset.Id = input.Id
-	asset.Name = input.Name
 	asset.PackingHouseRegisterNumber = input.PackingHouseRegisterNumber
 	asset.Address = input.Address
 	asset.PackingHouseName = input.PackingHouseName
@@ -191,10 +189,6 @@ func (s *SmartContract) GetAllGMP(ctx contractapi.TransactionContextInterface, a
 	errInput := json.Unmarshal([]byte(args), &input)
 	if errInput != nil {
 		return nil, fmt.Errorf("Unmarshal json string")
-	}
-
-	if input.Name != nil {
-		filter["name"] = input.Name
 	}
 
 	if input.PackingHouseRegisterNumber != nil {
@@ -381,7 +375,6 @@ func (s *SmartContract) CreateGmpCsv(
 
 		asset := entity.TransectionGMP{
 			Id:                         input.Id,
-			Name:                       input.Name,
 			PackingHouseRegisterNumber: input.PackingHouseRegisterNumber,
 			Address:                    input.Address,
 			PackingHouseName:           input.PackingHouseName,

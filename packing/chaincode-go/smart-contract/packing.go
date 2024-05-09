@@ -57,9 +57,7 @@ func (s *SmartContract) CreatePacking(
 		FarmerID:       input.FarmerID,
 		ForecastWeight: input.ForecastWeight,
 		ActualWeight:   input.ActualWeight,
-		IsPackerSaved:  input.IsPackerSaved,
 		SavedTime:      input.SavedTime,
-		IsApproved:     input.IsApproved,
 		ApprovedDate:   input.ApprovedDate,
 		ApprovedType:   input.ApprovedType,
 		FinalWeight:    input.FinalWeight,
@@ -67,6 +65,7 @@ func (s *SmartContract) CreatePacking(
 		PackerId:       input.PackerId,
 		Gmp:            input.Gmp,
 		Gap:            input.Gap,
+		ProcessStatus:  input.ProcessStatus,
 		Owner:          clientID,
 		OrgName:        orgName,
 		UpdatedAt:      CreatedAt,
@@ -107,9 +106,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.FarmerID = input.FarmerID // not update
 	asset.ForecastWeight = input.ForecastWeight
 	asset.ActualWeight = input.ActualWeight
-	asset.IsPackerSaved = input.IsPackerSaved
 	asset.SavedTime = input.SavedTime
-	asset.IsApproved = input.IsApproved
 	asset.ApprovedDate = input.ApprovedDate
 	asset.ApprovedType = input.ApprovedType
 	asset.FinalWeight = input.FinalWeight
@@ -117,6 +114,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.PackerId = input.PackerId // not update
 	asset.Gmp = input.Gmp
 	asset.Gap = input.Gap
+	asset.ProcessStatus = input.ProcessStatus
 	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)
@@ -205,6 +203,28 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 
 	if input.PackerId != nil {
 		filter["packerId"] = *input.PackerId
+	}
+
+	if input.Gap != nil {
+		filter["gap"] = *input.Gap
+	}
+
+	if input.StartDate != nil && input.EndDate != nil {
+		filter["createdAt"] = map[string]interface{}{
+			"$gte": *input.StartDate,
+			"$lte": *input.EndDate,
+		}
+	}
+
+	if input.ForecastWeightFrom != nil && input.ForecastWeightTo != nil {
+		filter["forecastWeight"] = map[string]interface{}{
+			"$gte": *input.ForecastWeightFrom,
+			"$lte": *input.ForecastWeightTo,
+		}
+	}
+
+	if input.ProcessStatus != nil {
+		filter["processStatus"] = *input.ProcessStatus
 	}
 
 	limit := input.Limit
