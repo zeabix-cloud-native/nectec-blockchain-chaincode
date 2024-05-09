@@ -17,6 +17,7 @@ type TransectionPacking struct {
 	Remark         string    `json:"remark"`
 	PackerId       string    `json:"packerId"`
 	Gmp            string    `json:"gmp"`
+	Gap            string    `json:"gap"`
 	Owner          string    `json:"owner"`
 	OrgName        string    `json:"orgName"`
 	UpdatedAt      time.Time `json:"updatedAt"`

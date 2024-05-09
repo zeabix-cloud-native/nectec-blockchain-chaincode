@@ -17,6 +17,7 @@ type TransectionReponse struct {
 	Remark         string    `json:"remark"`
 	PackerId       string    `json:"packerId"`
 	Gmp            string    `json:"gmp"`
+	Gap            string    `json:"gap"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 	CreatedAt      time.Time `json:"createdAt"`
 }
