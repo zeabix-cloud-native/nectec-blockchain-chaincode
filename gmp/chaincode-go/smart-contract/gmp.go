@@ -57,6 +57,9 @@ func (s *SmartContract) CreateGMP(
 		Name:                       input.Name,
 		PackingHouseRegisterNumber: input.PackingHouseRegisterNumber,
 		Address:                    input.Address,
+		PackingHouseName:           input.PackingHouseName,
+		UpdatedDate:                input.UpdatedDate,
+		Source:                     input.Source,
 		Owner:                      clientID,
 		OrgName:                    orgName,
 		UpdatedAt:                  CreatedAt,
@@ -101,6 +104,9 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.Name = input.Name
 	asset.PackingHouseRegisterNumber = input.PackingHouseRegisterNumber
 	asset.Address = input.Address
+	asset.PackingHouseName = input.PackingHouseName
+	asset.UpdatedDate = input.UpdatedDate
+	asset.Source = input.Source
 	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)
@@ -378,6 +384,9 @@ func (s *SmartContract) CreateGmpCsv(
 			Name:                       input.Name,
 			PackingHouseRegisterNumber: input.PackingHouseRegisterNumber,
 			Address:                    input.Address,
+			PackingHouseName:           input.PackingHouseName,
+			UpdatedDate:                input.UpdatedDate,
+			Source:                     input.Source,
 			Owner:                      clientID,
 			OrgName:                    orgName,
 		}

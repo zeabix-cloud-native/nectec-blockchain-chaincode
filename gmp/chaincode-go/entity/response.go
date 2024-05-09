@@ -7,6 +7,9 @@ type TransectionReponse struct {
 	Name                       string    `json:"name"`
 	PackingHouseRegisterNumber string    `json:"packingHouseRegisterNumber"`
 	Address                    string    `json:"address"`
+	PackingHouseName           string    `json:"packingHouseName"`
+	UpdatedDate                string    `json:"updatedDate"`
+	Source                     string    `json:"source"`
 	UpdatedAt                  time.Time `json:"updatedAt"`
 	CreatedAt                  time.Time `json:"createdAt"`
 }
