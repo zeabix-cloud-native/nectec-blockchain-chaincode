@@ -54,6 +54,7 @@ func (s *SmartContract) CreatePacker(
 	asset := entity.TransectionPacker{
 		Id:        input.Id,
 		CertId:    input.CertId,
+		UserId:    input.UserId,
 		Owner:     clientID,
 		OrgName:   orgName,
 		UpdatedAt: CreatedAt,
@@ -95,6 +96,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 
 	asset.Id = input.Id
 	asset.CertId = input.CertId
+	asset.UserId = input.UserId
 	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)
@@ -166,6 +168,33 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 		return nil, err
 	}
 	log.Printf("Error creating packer chaincode: %#c", asset)
+
+	return &asset, nil
+}
+
+func (s *SmartContract) GetPackerById(ctx contractapi.TransactionContextInterface, userId string) (*entity.TransectionReponse, error) {
+	queryKey := fmt.Sprintf(`{"selector":{"userId":"%s"}}`, userId)
+
+	resultsIterator, err := ctx.GetStub().GetQueryResult(queryKey)
+	if err != nil {
+		return nil, fmt.Errorf("error querying chaincode: %v", err)
+	}
+	defer resultsIterator.Close()
+
+	if !resultsIterator.HasNext() {
+		return nil, fmt.Errorf("the asset with userId %s does not exist", userId)
+	}
+
+	queryResponse, err := resultsIterator.Next()
+	if err != nil {
+		return nil, fmt.Errorf("error getting next query result: %v", err)
+	}
+
+	var asset entity.TransectionReponse
+	err = json.Unmarshal(queryResponse.Value, &asset)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling asset JSON: %v", err)
+	}
 
 	return &asset, nil
 }
