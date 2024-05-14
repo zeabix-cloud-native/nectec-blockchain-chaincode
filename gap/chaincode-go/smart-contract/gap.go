@@ -194,29 +194,29 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 
 	return &asset, nil
 }
-func (s *SmartContract) ReadByCertID(ctx contractapi.TransactionContextInterface, certID string) (*entity.TransectionReponse, error) {
+func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterface, certID string) (*entity.TransectionReponse, error) {
 	// Get the asset using CertID
 	queryKey := fmt.Sprintf(`{"selector":{"certId":"%s"}}`, certID)
 
 	resultsIterator, err := ctx.GetStub().GetQueryResult(queryKey)
 	if err != nil {
-		return nil, fmt.Errorf("error querying chaincode: %v", err)
+		return nil, fmt.Errorf("false")
 	}
 	defer resultsIterator.Close()
 
 	if !resultsIterator.HasNext() {
-		return nil, fmt.Errorf("the asset with certID %s does not exist", certID)
+		return nil, fmt.Errorf("false")
 	}
 
 	queryResponse, err := resultsIterator.Next()
 	if err != nil {
-		return nil, fmt.Errorf("error getting next query result: %v", err)
+		return nil, fmt.Errorf("false")
 	}
 
 	var asset entity.TransectionReponse
 	err = json.Unmarshal(queryResponse.Value, &asset)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling asset JSON: %v", err)
+		return nil, fmt.Errorf("false")
 	}
 
 	return &asset, nil
