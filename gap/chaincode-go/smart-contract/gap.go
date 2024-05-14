@@ -194,32 +194,42 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 
 	return &asset, nil
 }
-func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterface, certID string) (*entity.TransectionReponse, error) {
+func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterface, certID string) (*entity.GetByCertIDReponse, error) {
 	// Get the asset using CertID
 	queryKey := fmt.Sprintf(`{"selector":{"certId":"%s"}}`, certID)
 
 	resultsIterator, err := ctx.GetStub().GetQueryResult(queryKey)
+	var asset *entity.TransectionReponse
+	resData := "Get gap by certID"
 	if err != nil {
-		return nil, fmt.Errorf("false")
+		return nil, fmt.Errorf("error querying chaincode: %v", err)
 	}
 	defer resultsIterator.Close()
 
 	if !resultsIterator.HasNext() {
-		return nil, fmt.Errorf("false")
+		resData = "Not found gap by certID"
+
+		return &entity.GetByCertIDReponse{
+			Data: resData,
+			Obj:  asset,
+		}, nil
 	}
 
 	queryResponse, err := resultsIterator.Next()
 	if err != nil {
-		return nil, fmt.Errorf("false")
+		return nil, fmt.Errorf("error getting next query result: %v", err)
 	}
 
-	var asset entity.TransectionReponse
 	err = json.Unmarshal(queryResponse.Value, &asset)
 	if err != nil {
-		return nil, fmt.Errorf("false")
+		return nil, fmt.Errorf("error unmarshalling asset JSON: %v", err)
 	}
 
-	return &asset, nil
+	return &entity.GetByCertIDReponse{
+		Data: resData,
+		Obj:  asset,
+	}, nil
+
 }
 
 func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
