@@ -473,7 +473,7 @@ func (s *SmartContract) CreateGapCsv(
 	return nil
 }
 
-func (s *SmartContract) UpdateFarmer(ctx contractapi.TransactionContextInterface, args string) error {
+func (s *SmartContract) MarkUsedGap(ctx contractapi.TransactionContextInterface, args string) error {
 	var input struct {
 		CertId   string `json:"certId"`
 		FarmerID string `json:"farmerId"`
