@@ -472,3 +472,46 @@ func (s *SmartContract) CreateGapCsv(
 
 	return nil
 }
+
+func (s *SmartContract) UpdateFarmer(ctx contractapi.TransactionContextInterface, args string) error {
+	var input struct {
+		CertId   string `json:"certId"`
+		FarmerID string `json:"farmerId"`
+	}
+	errInput := json.Unmarshal([]byte(args), &input)
+	if errInput != nil {
+		return fmt.Errorf("unmarshal json string: %v", errInput)
+	}
+
+	queryKey := fmt.Sprintf(`{"selector":{"certId":"%s"}}`, input.CertId)
+	resultsIterator, err := ctx.GetStub().GetQueryResult(queryKey)
+	if err != nil {
+		return fmt.Errorf("error querying chaincode: %v", err)
+	}
+	defer resultsIterator.Close()
+
+	if !resultsIterator.HasNext() {
+		return fmt.Errorf("no asset found with certId: %s", input.CertId)
+	}
+
+	queryResponse, err := resultsIterator.Next()
+	if err != nil {
+		return fmt.Errorf("error iterating query results: %v", err)
+	}
+
+	var asset entity.TransectionGAP
+	err = json.Unmarshal(queryResponse.Value, &asset)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling asset: %v", err)
+	}
+
+	asset.FarmerID = input.FarmerID
+	asset.UpdatedAt = time.Now()
+
+	assetJSON, err := json.Marshal(asset)
+	if err != nil {
+		return fmt.Errorf("error marshalling updated asset: %v", err)
+	}
+
+	return ctx.GetStub().PutState(asset.Id, assetJSON)
+}
