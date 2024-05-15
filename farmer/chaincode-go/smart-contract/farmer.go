@@ -401,3 +401,8 @@ func (s *SmartContract) GetLastIdFarmer(ctx contractapi.TransactionContextInterf
 
 	return result.Id
 }
+
+func (s *SmartContract) SaveUserEvent(ctx contractapi.TransactionContextInterface, args string) {
+	assetJSON, _ := json.Marshal(args)
+	ctx.GetStub().SetEvent("SaveUserEvent", assetJSON)
+}
