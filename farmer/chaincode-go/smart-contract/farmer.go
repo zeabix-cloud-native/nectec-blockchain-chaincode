@@ -381,7 +381,7 @@ func (s *SmartContract) GetLastIdFarmer(ctx contractapi.TransactionContextInterf
 
 	// Check if there is a result
 	if !resultsIterator.HasNext() {
-		return "not found data Farmer"
+		return ""
 	}
 
 	// Get the first (and only) result
