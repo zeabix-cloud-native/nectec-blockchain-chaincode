@@ -33,4 +33,5 @@ type FilterGetAll struct {
 	AreaRaiTo   *float32 `json:"areaRaiTo"`
 	IssueDate   *string  `json:"issueDate"`
 	ExpireDate  *string  `json:"expireDate"`
+	AvailableGap *string    `json:"availableGap"`
 }

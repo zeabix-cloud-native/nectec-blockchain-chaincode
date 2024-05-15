@@ -269,6 +269,10 @@ func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface, a
 	limit := input.Limit
 	skip := input.Skip
 
+	if (input.AvailableGap != nil) {
+		filter["farmerId"] = ""
+	}
+
 	selector := map[string]interface{}{
 		"selector": filter,
 	}
