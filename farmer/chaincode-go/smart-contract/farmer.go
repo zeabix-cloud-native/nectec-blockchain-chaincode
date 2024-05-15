@@ -173,42 +173,19 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 
 func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	orgName, err := ctx.GetClientIdentity().GetMSPID()
-	if err != nil {
-		return nil, err
-	}
+	var input entity.FilterGetAll
+	var filter = map[string]interface{}{}
 
-	var input entity.Pagination
 	errInput := json.Unmarshal([]byte(args), &input)
-
 	if errInput != nil {
-		return nil, fmt.Errorf("Unmarshal json string")
+		return nil, fmt.Errorf("Unmarshal json string: %v", errInput)
 	}
 
 	limit := input.Limit
 	skip := input.Skip
 
-	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
-	if err != nil {
-		return nil, err
-	}
-	defer resultsIterator.Close()
-
-	total := 0
-	for resultsIterator.HasNext() {
-		_, err := resultsIterator.Next()
-		if err != nil {
-			return nil, err
-		}
-		total++
-	}
-
 	selector := map[string]interface{}{
-		"selector": map[string]interface{}{
-			"orgName": orgName,
-		},
-		"limit": limit,
-		"skip":  skip,
+		"selector": filter,
 	}
 
 	queryString, err := json.Marshal(selector)
@@ -216,7 +193,36 @@ func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface
 		return nil, err
 	}
 
-	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryString), int32(limit), "")
+	resultsIterator, err := ctx.GetStub().GetQueryResult(string(queryString))
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	total := 0
+
+	for resultsIterator.HasNext() {
+		_, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		total++
+	}
+	if skip > total {
+		return nil, fmt.Errorf("Skip Over Total Data")
+	}
+
+	if skip != 0 || limit != 0 {
+		selector["skip"] = skip
+		selector["limit"] = limit
+	}
+
+	queryStringPagination, err := json.Marshal(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryStringPagination), int32(limit), "")
 	if err != nil {
 		return nil, err
 	}
@@ -356,4 +362,42 @@ func (s *SmartContract) GetHistoryForKey(ctx contractapi.TransactionContextInter
 	}
 
 	return history, nil
+}
+
+func (s *SmartContract) GetLastIdFarmer(ctx contractapi.TransactionContextInterface) string {
+	// Query to get all records sorted by ID in descending order
+	query := `{
+			"selector": {},
+			"sort": [{"_id": "desc"}],
+			"limit": 1,
+			"use_index": "index-id"
+	}`
+
+	resultsIterator, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return "error querying CouchDB"
+	}
+	defer resultsIterator.Close()
+
+	// Check if there is a result
+	if !resultsIterator.HasNext() {
+		return "not found data Farmer"
+	}
+
+	// Get the first (and only) result
+	queryResponse, err := resultsIterator.Next()
+	if err != nil {
+		return "error iterating query results"
+	}
+
+	var result struct {
+		Id string `json:"id"`
+	}
+
+	// Unmarshal the result into the result struct
+	if err := json.Unmarshal(queryResponse.Value, &result); err != nil {
+		return "error unmarshalling document"
+	}
+
+	return result.Id
 }

@@ -11,7 +11,7 @@ type TransectionFarmer struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-type Pagination struct {
+type FilterGetAll struct {
 	Skip  int `json:"skip"`
 	Limit int `json:"limit"`
 }
