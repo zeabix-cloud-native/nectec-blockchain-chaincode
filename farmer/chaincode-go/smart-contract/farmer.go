@@ -16,7 +16,7 @@ type SmartContract struct {
 	contractapi.Contract
 }
 
-func (s *SmartContract) CreateAsset(
+func (s *SmartContract) CreateFarmer(
 	ctx contractapi.TransactionContextInterface,
 	args string,
 ) error {
@@ -405,4 +405,62 @@ func (s *SmartContract) GetLastIdFarmer(ctx contractapi.TransactionContextInterf
 func (s *SmartContract) SaveUserEvent(ctx contractapi.TransactionContextInterface, args string) {
 	assetJSON, _ := json.Marshal(args)
 	ctx.GetStub().SetEvent("SaveUserEvent", assetJSON)
+}
+
+func (s *SmartContract) CreateFarmerCsv(
+	ctx contractapi.TransactionContextInterface,
+	args string,
+) error {
+	var inputs []entity.TransectionFarmer
+
+	errInput := json.Unmarshal([]byte(args), &inputs)
+	if errInput != nil {
+		return fmt.Errorf("failed to unmarshal JSON array: %v", errInput)
+	}
+
+	for _, input := range inputs {
+		orgName, err := ctx.GetClientIdentity().GetMSPID()
+		if err != nil {
+			return fmt.Errorf("failed to get submitting client's MSP ID: %v", err)
+		}
+
+		exists, err := s.AssetExists(ctx, input.Id)
+		if err != nil {
+			return fmt.Errorf("error checking if asset exists: %v", err)
+		}
+		if exists {
+			return fmt.Errorf("the asset %s already exists", input.Id)
+		}
+
+		clientID, err := s.GetSubmittingClientIdentity(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get submitting client's identity: %v", err)
+		}
+
+		formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
+		CreatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+
+		asset := entity.TransectionFarmer{
+			Id:        input.Id,
+			CertId:    input.CertId,
+			Owner:     clientID,
+			OrgName:   orgName,
+			UpdatedAt: CreatedAt,
+			CreatedAt: CreatedAt,
+		}
+
+		assetJSON, err := json.Marshal(asset)
+		if err != nil {
+			return fmt.Errorf("failed to marshal asset JSON: %v", err)
+		}
+
+		err = ctx.GetStub().PutState(input.Id, assetJSON)
+		if err != nil {
+			return fmt.Errorf("failed to put state for asset %s: %v", input.Id, err)
+		}
+
+		fmt.Printf("Asset %s created successfully\n", input.Id)
+	}
+
+	return nil
 }
