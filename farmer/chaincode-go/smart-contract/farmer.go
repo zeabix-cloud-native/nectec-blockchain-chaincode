@@ -460,6 +460,8 @@ func (s *SmartContract) CreateFarmerCsv(
 		}
 
 		fmt.Printf("Asset %s created successfully\n", input.Id)
+
+		ctx.GetStub().SetEvent("batchCreatedUserEvent", assetJSON)
 	}
 
 	return nil
