@@ -412,6 +412,7 @@ func (s *SmartContract) CreateFarmerCsv(
 	args string,
 ) error {
 	var inputs []entity.TransectionFarmer
+	var eventPayloads []entity.TransectionFarmer
 
 	errInput := json.Unmarshal([]byte(args), &inputs)
 	if errInput != nil {
@@ -437,19 +438,17 @@ func (s *SmartContract) CreateFarmerCsv(
 			return fmt.Errorf("failed to get submitting client's identity: %v", err)
 		}
 
-		formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
-		CreatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
-
 		asset := entity.TransectionFarmer{
 			Id:        input.Id,
 			CertId:    input.CertId,
 			Owner:     clientID,
 			OrgName:   orgName,
-			UpdatedAt: CreatedAt,
-			CreatedAt: CreatedAt,
+			UpdatedAt: input.CreatedAt,
+			CreatedAt: input.UpdatedAt,
 		}
 
 		assetJSON, err := json.Marshal(asset)
+		eventPayloads = append(eventPayloads, asset)
 		if err != nil {
 			return fmt.Errorf("failed to marshal asset JSON: %v", err)
 		}
@@ -461,8 +460,14 @@ func (s *SmartContract) CreateFarmerCsv(
 
 		fmt.Printf("Asset %s created successfully\n", input.Id)
 
-		ctx.GetStub().SetEvent("batchCreatedUserEvent", assetJSON)
+
 	}
+
+	eventPayloadJSON, err := json.Marshal(eventPayloads)
+	if err != nil {
+		return fmt.Errorf("failed to marshal asset JSON: %v", err)
+	}
+	ctx.GetStub().SetEvent("batchCreatedUserEvent", eventPayloadJSON)
 
 	return nil
 }
