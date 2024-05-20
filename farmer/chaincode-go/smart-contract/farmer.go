@@ -88,7 +88,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+		return fmt.Errorf(entity.UNAUTHORIZE)
 	}
 
 	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
@@ -120,7 +120,7 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+		return fmt.Errorf(entity.UNAUTHORIZE)
 	}
 
 	return ctx.GetStub().DelState(id)
@@ -139,7 +139,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+		return fmt.Errorf(entity.UNAUTHORIZE)
 	}
 
 	asset.Owner = newOwner
@@ -459,7 +459,6 @@ func (s *SmartContract) CreateFarmerCsv(
 		}
 
 		fmt.Printf("Asset %s created successfully\n", input.Id)
-
 
 	}
 
