@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/core"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/entity"
 )
 
@@ -21,15 +21,16 @@ func (s *SmartContract) CreateFarmer(
 	args string,
 ) error {
 
-	var input entity.TransectionFarmer
-
-	errInput := json.Unmarshal([]byte(args), &input)
-
-	if errInput != nil {
-		return fmt.Errorf("Unmarshal json string")
+	input, err := core.UnmarshalFarmer(args)
+	if err != nil {
+		return err
 	}
 
-	err := ctx.GetClientIdentity().AssertAttributeValue("farmer.creator", "true")
+	// err := ctx.GetClientIdentity().AssertAttributeValue("farmer.creator", "true")
+	// if err != nil {
+	// 	return fmt.Errorf("submitting client not authorized to create asset, does not have abac.creator role")
+	// }
+
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
 		return fmt.Errorf("submitting client not authorized to create asset, does not have farmer.creator role")
@@ -70,11 +71,9 @@ func (s *SmartContract) CreateFarmer(
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	args string) error {
 
-	var input entity.TransectionFarmer
-	errInput := json.Unmarshal([]byte(args), &input)
-
-	if errInput != nil {
-		return fmt.Errorf("Unmarshal json string")
+	input, err := core.UnmarshalFarmer(args)
+	if err != nil {
+		return err
 	}
 
 	asset, err := s.ReadAsset(ctx, input.Id)
@@ -166,83 +165,36 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Error creating farmer chaincode: %#c", asset)
 
 	return &asset, nil
 }
 
 func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	var input entity.FilterGetAll
 	var filter = map[string]interface{}{}
 
-	errInput := json.Unmarshal([]byte(args), &input)
-	if errInput != nil {
-		return nil, fmt.Errorf("Unmarshal json string: %v", errInput)
-	}
-
-	limit := input.Limit
-	skip := input.Skip
-
-	selector := map[string]interface{}{
-		"selector": filter,
-	}
-
-	queryString, err := json.Marshal(selector)
+	input, err := core.UnmarshalGetAll(args)
 	if err != nil {
 		return nil, err
 	}
 
-	resultsIterator, err := ctx.GetStub().GetQueryResult(string(queryString))
-	if err != nil {
-		return nil, err
-	}
-	defer resultsIterator.Close()
-
-	total := 0
-
-	for resultsIterator.HasNext() {
-		_, err := resultsIterator.Next()
-		if err != nil {
-			return nil, err
-		}
-		total++
-	}
-	if skip > total {
-		return nil, fmt.Errorf("Skip Over Total Data")
-	}
-
-	if skip != 0 || limit != 0 {
-		selector["skip"] = skip
-		selector["limit"] = limit
-	}
-
-	queryStringPagination, err := json.Marshal(selector)
+	queryString, err := core.BuildQueryString(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryStringPagination), int32(limit), "")
+	total, err := core.CountTotalResults(ctx, queryString)
 	if err != nil {
 		return nil, err
 	}
-	defer queryResults.Close()
 
-	var assets []*entity.TransectionReponse
+	if input.Skip > total {
+		return nil, fmt.Errorf(entity.SkipOver)
+	}
 
-	for queryResults.HasNext() {
-		queryResponse, err := queryResults.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		var asset entity.TransectionReponse
-		err = json.Unmarshal(queryResponse.Value, &asset)
-		if err != nil {
-			return nil, err
-		}
-
-		assets = append(assets, &asset)
+	assets, err := core.FetchResultsWithPagination(ctx, input)
+	if err != nil {
+		return nil, err
 	}
 
 	sort.Slice(assets, func(i, j int) bool {
@@ -275,7 +227,7 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 
 	b64ID, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
-		return "", fmt.Errorf("Failed to read clientID: %v", err)
+		return "", fmt.Errorf("failed to read clientID: %v", err)
 	}
 	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
 	if err != nil {

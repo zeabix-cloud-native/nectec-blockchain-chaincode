@@ -5,6 +5,7 @@ import "time"
 const (
 	UNAUTHORIZE string = "client is not authorized to delete this asset"
 	TimeFormat  string = "2006-01-02T15:04:05Z"
+	SkipOver    string = "skip over total data"
 )
 
 type TransectionFarmer struct {
