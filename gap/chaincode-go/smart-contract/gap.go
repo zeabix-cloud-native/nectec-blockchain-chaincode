@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/core"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/entity"
 )
 
@@ -22,15 +22,12 @@ func (s *SmartContract) CreateGAP(
 	args string,
 ) error {
 
-	var input entity.TransectionGAP
-
-	errInput := json.Unmarshal([]byte(args), &input)
-
-	if errInput != nil {
-		return fmt.Errorf("Unmarshal json string")
+	input, err := core.UnmarshalGap(args)
+	if err != nil {
+		return err
 	}
 
-	err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
+	// err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
 		return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role1")
@@ -49,8 +46,7 @@ func (s *SmartContract) CreateGAP(
 		return err
 	}
 
-	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
-	CreatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+	CreatedAt := core.GetTimeNow()
 
 	asset := entity.TransectionGAP{
 		Id:          input.Id,
@@ -82,11 +78,9 @@ func (s *SmartContract) CreateGAP(
 
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, args string) error {
 
-	var input entity.TransectionGAP
-	errInput := json.Unmarshal([]byte(args), &input)
-
-	if errInput != nil {
-		return fmt.Errorf("Unmarshal json string")
+	input, err := core.UnmarshalGap(args)
+	if err != nil {
+		return err
 	}
 
 	asset, err := s.ReadAsset(ctx, input.Id)
@@ -100,11 +94,10 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+		return fmt.Errorf(entity.UNAUTHORIZE)
 	}
 
-	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
-	UpdatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+	UpdatedAt := core.GetTimeNow()
 
 	asset.Id = input.Id
 	asset.CertID = input.CertID
@@ -143,7 +136,7 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+		return fmt.Errorf(entity.UNAUTHORIZE)
 	}
 
 	return ctx.GetStub().DelState(id)
@@ -163,7 +156,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+		return fmt.Errorf(entity.UNAUTHORIZE)
 	}
 
 	asset.Owner = newOwner
@@ -190,7 +183,6 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Error creating farmer chaincode: %#c", asset)
 
 	return &asset, nil
 }
@@ -234,104 +226,29 @@ func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterfa
 
 func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	var input entity.FilterGetAll
-	var filter = map[string]interface{}{}
+	input, err := core.UnmarshalGetAll(args)
+	if err != nil {
+		return nil, err
+	}
+	filter := core.SetFilter(input)
 
-	errInput := json.Unmarshal([]byte(args), &input)
-	if errInput != nil {
-		return nil, fmt.Errorf("Unmarshal json string: %v", errInput)
-	}
-	if input.CertID != nil {
-		filter["certId"] = *input.CertID
-	}
-	if input.AreaCode != nil {
-		filter["areaCode"] = *input.AreaCode
-	}
-	if input.Province != nil {
-		filter["province"] = *input.Province
-	}
-	if input.District != nil {
-		filter["district"] = *input.District
-	}
-	if input.AreaRaiFrom != nil && input.AreaRaiTo != nil {
-		filter["areaRai"] = map[string]interface{}{
-			"$gte": *input.AreaRaiFrom,
-			"$lte": *input.AreaRaiTo,
-		}
-	}
-	if input.IssueDate != nil {
-		filter["issueDate"] = *input.IssueDate
-	}
-	if input.ExpireDate != nil {
-		filter["expireDate"] = *input.ExpireDate
-	}
-
-	limit := input.Limit
-	skip := input.Skip
-
-	if (input.AvailableGap != nil) {
-		filter["farmerId"] = ""
-	}
-
-	selector := map[string]interface{}{
-		"selector": filter,
-	}
-
-	queryString, err := json.Marshal(selector)
+	queryString, err := core.BuildQueryString(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	resultsIterator, err := ctx.GetStub().GetQueryResult(string(queryString))
-	if err != nil {
-		return nil, err
-	}
-	defer resultsIterator.Close()
-
-	total := 0
-
-	for resultsIterator.HasNext() {
-		_, err := resultsIterator.Next()
-		if err != nil {
-			return nil, err
-		}
-		total++
-	}
-	if skip > total {
-		return nil, fmt.Errorf("Skip Over Total Data")
-	}
-
-	if skip != 0 || limit != 0 {
-		selector["skip"] = skip
-		selector["limit"] = limit
-	}
-
-	queryStringPagination, err := json.Marshal(selector)
+	total, err := core.CountTotalResults(ctx, queryString)
 	if err != nil {
 		return nil, err
 	}
 
-	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryStringPagination), int32(limit), "")
+	if input.Skip > total {
+		return nil, fmt.Errorf(entity.SkipOver)
+	}
+
+	assets, err := core.FetchResultsWithPagination(ctx, input, filter)
 	if err != nil {
 		return nil, err
-	}
-	defer queryResults.Close()
-
-	var assets []*entity.TransectionReponse
-
-	for queryResults.HasNext() {
-		queryResponse, err := queryResults.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		var asset entity.TransectionReponse
-		err = json.Unmarshal(queryResponse.Value, &asset)
-		if err != nil {
-			return nil, err
-		}
-
-		assets = append(assets, &asset)
 	}
 
 	sort.Slice(assets, func(i, j int) bool {
@@ -363,7 +280,7 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 
 	b64ID, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
-		return "", fmt.Errorf("Failed to read clientID: %v", err)
+		return "", fmt.Errorf("failed to read clientID: %v", err)
 	}
 	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
 	if err != nil {

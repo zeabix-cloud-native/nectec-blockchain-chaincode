@@ -2,6 +2,12 @@ package entity
 
 import "time"
 
+const (
+	UNAUTHORIZE string = "client is not authorized to delete this asset"
+	TimeFormat  string = "2006-01-02T15:04:05Z"
+	SkipOver    string = "skip over total data"
+)
+
 type TransectionGAP struct {
 	Id          string    `json:"id"`
 	CertID      string    `json:"certId"`
@@ -23,15 +29,15 @@ type TransectionGAP struct {
 }
 
 type FilterGetAll struct {
-	Skip        int      `json:"skip"`
-	Limit       int      `json:"limit"`
-	CertID      *string  `json:"certId"`
-	AreaCode    *string  `json:"areaCode"`
-	District    *string  `json:"district"`
-	Province    *string  `json:"province"`
-	AreaRaiFrom *float32 `json:"areaRaiFrom"`
-	AreaRaiTo   *float32 `json:"areaRaiTo"`
-	IssueDate   *string  `json:"issueDate"`
-	ExpireDate  *string  `json:"expireDate"`
-	AvailableGap *string    `json:"availableGap"`
+	Skip         int      `json:"skip"`
+	Limit        int      `json:"limit"`
+	CertID       *string  `json:"certId"`
+	AreaCode     *string  `json:"areaCode"`
+	District     *string  `json:"district"`
+	Province     *string  `json:"province"`
+	AreaRaiFrom  *float32 `json:"areaRaiFrom"`
+	AreaRaiTo    *float32 `json:"areaRaiTo"`
+	IssueDate    *string  `json:"issueDate"`
+	ExpireDate   *string  `json:"expireDate"`
+	AvailableGap *string  `json:"availableGap"`
 }
