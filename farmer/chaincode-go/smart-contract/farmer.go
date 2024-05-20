@@ -48,8 +48,8 @@ func (s *SmartContract) CreateFarmer(
 		return err
 	}
 
-	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
-	CreatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+	formattedTime := time.Now().Format(entity.TimeFormat)
+	CreatedAt, _ := time.Parse(entity.TimeFormat, formattedTime)
 
 	asset := entity.TransectionFarmer{
 		Id:        input.Id,
@@ -91,8 +91,8 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf(entity.UNAUTHORIZE)
 	}
 
-	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
-	UpdatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+	formattedTime := time.Now().Format(entity.TimeFormat)
+	UpdatedAt, _ := time.Parse(entity.TimeFormat, formattedTime)
 
 	asset.Id = input.Id
 	asset.CertId = input.CertId
@@ -349,7 +349,7 @@ func (s *SmartContract) GetHistoryForKey(ctx contractapi.TransactionContextInter
 			assetsValue = []*entity.TransectionReponse{}
 		}
 		// Convert the timestamp to string in the desired format
-		timestampStr := time.Unix(record.Timestamp.Seconds, int64(record.Timestamp.Nanos)).Format("2006-01-02T15:04:05Z")
+		timestampStr := time.Unix(record.Timestamp.Seconds, int64(record.Timestamp.Nanos)).Format(entity.TimeFormat)
 
 		historyRecord := &entity.TransactionHistory{
 			TxId:      record.TxId,
