@@ -1,4 +1,4 @@
-package core
+package issuer
 
 import (
 	"encoding/json"
@@ -14,4 +14,7 @@ func Unmarshal(args string, entityType interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("unmarshal json string: %v", err)
 	}
 	return entityValue, nil
+}
+func ExampleFunction() {
+	fmt.Println("This is an example function from the issuer package")
 }
