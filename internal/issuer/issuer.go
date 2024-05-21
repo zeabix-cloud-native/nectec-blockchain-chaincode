@@ -7,7 +7,12 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/entity"
+)
+
+const (
+	UNAUTHORIZE string = "client is not authorized to delete this asset"
+	TIMEFORMAT  string = "2006-01-02T15:04:05Z"
+	SKIPOVER    string = "skip over total data"
 )
 
 func Unmarshal(args string, entityType interface{}) (interface{}, error) {
@@ -50,7 +55,7 @@ func CountTotalResults(ctx contractapi.TransactionContextInterface, queryString 
 }
 
 func GetTimeNow() time.Time {
-	formattedTime := time.Now().Format(entity.TimeFormat)
-	CreatedAt, _ := time.Parse(entity.TimeFormat, formattedTime)
+	formattedTime := time.Now().Format(TIMEFORMAT)
+	CreatedAt, _ := time.Parse(TIMEFORMAT, formattedTime)
 	return CreatedAt
 }
