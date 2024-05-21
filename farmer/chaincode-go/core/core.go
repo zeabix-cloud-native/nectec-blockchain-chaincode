@@ -2,60 +2,12 @@ package core
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/entity"
 )
 
-func UnmarshalFarmer(args string) (entity.TransectionFarmer, error) {
-	var input entity.TransectionFarmer
-	err := json.Unmarshal([]byte(args), &input)
-	if err != nil {
-		return entity.TransectionFarmer{}, fmt.Errorf("unmarshal json string: %v", err)
-	}
-	return input, nil
-}
-
-func UnmarshalGetAll(args string) (entity.FilterGetAll, error) {
-	var input entity.FilterGetAll
-	err := json.Unmarshal([]byte(args), &input)
-	if err != nil {
-		return entity.FilterGetAll{}, fmt.Errorf("unmarshal json string: %v", err)
-	}
-	return input, nil
-}
-
-func BuildQueryString(filter map[string]interface{}) (string, error) {
-	selector := map[string]interface{}{
-		"selector": filter,
-	}
-	queryString, err := json.Marshal(selector)
-	if err != nil {
-		return "", err
-	}
-	return string(queryString), nil
-}
-
-func CountTotalResults(ctx contractapi.TransactionContextInterface, queryString string) (int, error) {
-	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
-	if err != nil {
-		return 0, err
-	}
-	defer resultsIterator.Close()
-
-	total := 0
-	for resultsIterator.HasNext() {
-		_, err := resultsIterator.Next()
-		if err != nil {
-			return 0, err
-		}
-		total++
-	}
-	return total, nil
-}
-
-func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, input entity.FilterGetAll) ([]*entity.TransectionReponse, error) {
+func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, input *entity.FilterGetAll) ([]*entity.TransectionReponse, error) {
 	var filter = map[string]interface{}{}
 
 	selector := map[string]interface{}{

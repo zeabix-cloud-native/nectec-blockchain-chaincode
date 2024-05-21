@@ -10,6 +10,7 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/core"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/entity"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer"
 )
 
 type SmartContract struct {
@@ -20,11 +21,12 @@ func (s *SmartContract) CreateFarmer(
 	ctx contractapi.TransactionContextInterface,
 	args string,
 ) error {
-
-	input, err := core.UnmarshalFarmer(args)
+	entityFarmer := entity.TransectionFarmer{}
+	inputInterface, err := issuer.Unmarshal(args, entityFarmer)
 	if err != nil {
 		return err
 	}
+	input := inputInterface.(*entity.TransectionFarmer)
 
 	// err := ctx.GetClientIdentity().AssertAttributeValue("farmer.creator", "true")
 	// if err != nil {
@@ -49,8 +51,7 @@ func (s *SmartContract) CreateFarmer(
 		return err
 	}
 
-	formattedTime := time.Now().Format(entity.TimeFormat)
-	CreatedAt, _ := time.Parse(entity.TimeFormat, formattedTime)
+	CreatedAt := issuer.GetTimeNow()
 
 	asset := entity.TransectionFarmer{
 		Id:        input.Id,
@@ -70,11 +71,12 @@ func (s *SmartContract) CreateFarmer(
 
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	args string) error {
-
-	input, err := core.UnmarshalFarmer(args)
+	entityType := entity.TransectionFarmer{}
+	inputInterface, err := issuer.Unmarshal(args, entityType)
 	if err != nil {
 		return err
 	}
+	input := inputInterface.(*entity.TransectionFarmer)
 
 	asset, err := s.ReadAsset(ctx, input.Id)
 	if err != nil {
@@ -90,8 +92,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf(entity.UNAUTHORIZE)
 	}
 
-	formattedTime := time.Now().Format(entity.TimeFormat)
-	UpdatedAt, _ := time.Parse(entity.TimeFormat, formattedTime)
+	UpdatedAt := issuer.GetTimeNow()
 
 	asset.Id = input.Id
 	asset.CertId = input.CertId
@@ -173,23 +174,25 @@ func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface
 
 	var filter = map[string]interface{}{}
 
-	input, err := core.UnmarshalGetAll(args)
+	entityGetAll := entity.FilterGetAll{}
+	inputInterface, err := issuer.Unmarshal(args, entityGetAll)
+	if err != nil {
+		return nil, err
+	}
+	input := inputInterface.(*entity.FilterGetAll)
+
+	queryString, err := issuer.BuildQueryString(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	queryString, err := core.BuildQueryString(filter)
-	if err != nil {
-		return nil, err
-	}
-
-	total, err := core.CountTotalResults(ctx, queryString)
+	total, err := issuer.CountTotalResults(ctx, queryString)
 	if err != nil {
 		return nil, err
 	}
 
 	if input.Skip > total {
-		return nil, fmt.Errorf(entity.SkipOver)
+		return nil, fmt.Errorf(issuer.SKIPOVER)
 	}
 
 	assets, err := core.FetchResultsWithPagination(ctx, input)
@@ -301,7 +304,7 @@ func (s *SmartContract) GetHistoryForKey(ctx contractapi.TransactionContextInter
 			assetsValue = []*entity.TransectionReponse{}
 		}
 		// Convert the timestamp to string in the desired format
-		timestampStr := time.Unix(record.Timestamp.Seconds, int64(record.Timestamp.Nanos)).Format(entity.TimeFormat)
+		timestampStr := time.Unix(record.Timestamp.Seconds, int64(record.Timestamp.Nanos)).Format(issuer.TIMEFORMAT)
 
 		historyRecord := &entity.TransactionHistory{
 			TxId:      record.TxId,
