@@ -2,31 +2,12 @@ package core
 
 import (
 	"encoding/json"
-	"fmt"
-	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/entity"
 )
 
-func UnmarshalGap(args string) (entity.TransectionGAP, error) {
-	var input entity.TransectionGAP
-	err := json.Unmarshal([]byte(args), &input)
-	if err != nil {
-		return entity.TransectionGAP{}, fmt.Errorf("unmarshal json string: %v", err)
-	}
-	return input, nil
-}
-
-func UnmarshalGetAll(args string) (entity.FilterGetAll, error) {
-	var input entity.FilterGetAll
-	err := json.Unmarshal([]byte(args), &input)
-	if err != nil {
-		return entity.FilterGetAll{}, fmt.Errorf("unmarshal json string: %v", err)
-	}
-	return input, nil
-}
-func SetFilter(input entity.FilterGetAll) map[string]interface{} {
+func SetFilter(input *entity.FilterGetAll) map[string]interface{} {
 	var filter = map[string]interface{}{}
 	if input.CertID != nil {
 		filter["certId"] = *input.CertID
@@ -60,37 +41,7 @@ func SetFilter(input entity.FilterGetAll) map[string]interface{} {
 	return filter
 }
 
-func BuildQueryString(filter map[string]interface{}) (string, error) {
-
-	selector := map[string]interface{}{
-		"selector": filter,
-	}
-	queryString, err := json.Marshal(selector)
-	if err != nil {
-		return "", err
-	}
-	return string(queryString), nil
-}
-
-func CountTotalResults(ctx contractapi.TransactionContextInterface, queryString string) (int, error) {
-	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
-	if err != nil {
-		return 0, err
-	}
-	defer resultsIterator.Close()
-
-	total := 0
-	for resultsIterator.HasNext() {
-		_, err := resultsIterator.Next()
-		if err != nil {
-			return 0, err
-		}
-		total++
-	}
-	return total, nil
-}
-
-func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, input entity.FilterGetAll, filter map[string]interface{}) ([]*entity.TransectionReponse, error) {
+func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, input *entity.FilterGetAll, filter map[string]interface{}) ([]*entity.TransectionReponse, error) {
 
 	selector := map[string]interface{}{
 		"selector": filter,
@@ -129,10 +80,4 @@ func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, inp
 	}
 
 	return assets, nil
-}
-
-func GetTimeNow() time.Time {
-	formattedTime := time.Now().Format(entity.TimeFormat)
-	CreatedAt, _ := time.Parse(entity.TimeFormat, formattedTime)
-	return CreatedAt
 }

@@ -3,8 +3,8 @@ module github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-g
 go 1.17
 
 require (
-	github.com/google/uuid v1.6.0
 	github.com/hyperledger/fabric-contract-api-go v1.2.1
+	github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer v0.0.0-20240521094300-12d99dc1f4bd
 )
 
 require (

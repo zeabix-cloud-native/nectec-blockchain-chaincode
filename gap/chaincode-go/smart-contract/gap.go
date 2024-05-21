@@ -10,6 +10,7 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/core"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/entity"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer"
 )
 
 // SmartContract provides functions for managing an Asset
@@ -21,11 +22,12 @@ func (s *SmartContract) CreateGAP(
 	ctx contractapi.TransactionContextInterface,
 	args string,
 ) error {
-
-	input, err := core.UnmarshalGap(args)
+	entityGAP := entity.TransectionGAP{}
+	inputInterface, err := issuer.Unmarshal(args, entityGAP)
 	if err != nil {
 		return err
 	}
+	input := inputInterface.(*entity.TransectionGAP)
 
 	// err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
@@ -46,7 +48,7 @@ func (s *SmartContract) CreateGAP(
 		return err
 	}
 
-	CreatedAt := core.GetTimeNow()
+	CreatedAt := issuer.GetTimeNow()
 
 	asset := entity.TransectionGAP{
 		Id:          input.Id,
@@ -78,10 +80,12 @@ func (s *SmartContract) CreateGAP(
 
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, args string) error {
 
-	input, err := core.UnmarshalGap(args)
+	entityGAP := entity.TransectionGAP{}
+	inputInterface, err := issuer.Unmarshal(args, entityGAP)
 	if err != nil {
 		return err
 	}
+	input := inputInterface.(*entity.TransectionGAP)
 
 	asset, err := s.ReadAsset(ctx, input.Id)
 	if err != nil {
@@ -94,10 +98,10 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf(entity.UNAUTHORIZE)
+		return fmt.Errorf(issuer.UNAUTHORIZE)
 	}
 
-	UpdatedAt := core.GetTimeNow()
+	UpdatedAt := issuer.GetTimeNow()
 
 	asset.Id = input.Id
 	asset.CertID = input.CertID
@@ -136,7 +140,7 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf(entity.UNAUTHORIZE)
+		return fmt.Errorf(issuer.UNAUTHORIZE)
 	}
 
 	return ctx.GetStub().DelState(id)
@@ -156,7 +160,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf(entity.UNAUTHORIZE)
+		return fmt.Errorf(issuer.UNAUTHORIZE)
 	}
 
 	asset.Owner = newOwner
@@ -226,24 +230,26 @@ func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterfa
 
 func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	input, err := core.UnmarshalGetAll(args)
+	entityGetAll := entity.FilterGetAll{}
+	inputInterface, err := issuer.Unmarshal(args, entityGetAll)
 	if err != nil {
 		return nil, err
 	}
+	input := inputInterface.(*entity.FilterGetAll)
 	filter := core.SetFilter(input)
 
-	queryString, err := core.BuildQueryString(filter)
+	queryString, err := issuer.BuildQueryString(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	total, err := core.CountTotalResults(ctx, queryString)
+	total, err := issuer.CountTotalResults(ctx, queryString)
 	if err != nil {
 		return nil, err
 	}
 
 	if input.Skip > total {
-		return nil, fmt.Errorf(entity.SkipOver)
+		return nil, fmt.Errorf(issuer.SKIPOVER)
 	}
 
 	assets, err := core.FetchResultsWithPagination(ctx, input, filter)
