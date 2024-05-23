@@ -15,6 +15,11 @@ const (
 	SKIPOVER    string = "skip over total data"
 )
 
+type GetAllType struct {
+	Skip  int `json:"skip"`
+	Limit int `json:"limit"`
+}
+
 func Unmarshal(args string, entityType interface{}) (interface{}, error) {
 	entityValue := reflect.New(reflect.TypeOf(entityType)).Interface()
 	err := json.Unmarshal([]byte(args), entityValue)
@@ -58,4 +63,48 @@ func GetTimeNow() time.Time {
 	formattedTime := time.Now().Format(TIMEFORMAT)
 	CreatedAt, _ := time.Parse(TIMEFORMAT, formattedTime)
 	return CreatedAt
+}
+
+func GetAllNotFilter(ctx contractapi.TransactionContextInterface, input *GetAllType, resultType interface{}) ([]interface{}, error) {
+	var filter = map[string]interface{}{}
+
+	selector := map[string]interface{}{
+		"selector": filter,
+	}
+
+	if input.Skip != 0 || input.Limit != 0 {
+		selector["skip"] = input.Skip
+		selector["limit"] = input.Limit
+	}
+
+	queryString, err := json.Marshal(selector)
+	if err != nil {
+		return nil, err
+	}
+
+	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryString), int32(input.Limit), "")
+	if err != nil {
+		return nil, err
+	}
+	defer queryResults.Close()
+
+	var results []interface{}
+	resultTypeValue := reflect.TypeOf(resultType).Elem()
+
+	for queryResults.HasNext() {
+		queryResponse, err := queryResults.Next()
+		if err != nil {
+			return nil, err
+		}
+		resultInstance := reflect.New(resultTypeValue).Interface()
+
+		err = json.Unmarshal(queryResponse.Value, &resultInstance)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, resultInstance)
+	}
+
+	return results, nil
 }
