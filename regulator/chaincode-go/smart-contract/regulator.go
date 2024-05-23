@@ -286,8 +286,8 @@ func (s *SmartContract) FilterRegulator(ctx contractapi.TransactionContextInterf
 			return nil, err
 		}
 
-		var asset entity.TransectionRegulator
-		err = json.Unmarshal(queryResponse.Value, &asset)
+		var dataR entity.TransectionRegulator
+		err = json.Unmarshal(queryResponse.Value, &dataR)
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +298,7 @@ func (s *SmartContract) FilterRegulator(ctx contractapi.TransactionContextInterf
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assets = append(assets, &dataR)
 		}
 	}
 
