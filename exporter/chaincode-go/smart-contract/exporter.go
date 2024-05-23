@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/exporter/chaincode-go/core"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/exporter/chaincode-go/entity"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer"
 )
@@ -168,34 +167,71 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 
 func (s *SmartContract) GetAllExporter(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	var filter = map[string]interface{}{}
-
-	entityGetAll := entity.FilterGetAll{}
-	inputInterface, err := issuer.Unmarshal(args, entityGetAll)
-	if err != nil {
-		return nil, err
-	}
-	input := inputInterface.(*entity.FilterGetAll)
-
-	queryString, err := issuer.BuildQueryString(filter)
+	orgName, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
 		return nil, err
 	}
 
-	total, err := issuer.CountTotalResults(ctx, queryString)
+	var input entity.FilterGetAll
+	errInput := json.Unmarshal([]byte(args), &input)
+
+	if errInput != nil {
+		return nil, fmt.Errorf("unmarshal json string")
+	}
+
+	limit := input.Limit
+	skip := input.Skip
+
+	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	total := 0
+	for resultsIterator.HasNext() {
+		_, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		total++
+	}
+
+	selector := map[string]interface{}{
+		"selector": map[string]interface{}{
+			"orgName": orgName,
+		},
+		"limit": limit,
+		"skip":  skip,
+	}
+
+	queryString, err := json.Marshal(selector)
 	if err != nil {
 		return nil, err
 	}
 
-	if input.Skip > total {
-		return nil, fmt.Errorf(issuer.SKIPOVER)
-	}
-
-	assets, err := core.FetchResultsWithPagination(ctx, input)
+	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryString), int32(limit), "")
 	if err != nil {
 		return nil, err
 	}
+	defer queryResults.Close()
 
+	var assets []*entity.TransectionReponse
+
+	for queryResults.HasNext() {
+		queryResponse, err := queryResults.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var asset entity.TransectionReponse
+		err = json.Unmarshal(queryResponse.Value, &asset)
+		if err != nil {
+			return nil, err
+		}
+
+		assets = append(assets, &asset)
+	}
 	sort.Slice(assets, func(i, j int) bool {
 		return assets[i].UpdatedAt.Before(assets[j].UpdatedAt)
 	})
@@ -226,7 +262,7 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 
 	b64ID, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
-		return "", fmt.Errorf("Failed to read clientID: %v", err)
+		return "", fmt.Errorf("failed to read clientID: %v", err)
 	}
 	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
 	if err != nil {
