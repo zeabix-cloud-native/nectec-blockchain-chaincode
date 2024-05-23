@@ -36,17 +36,13 @@ func (s *SmartContract) CreateNstdaStaff(
 	}
 
 	exists, err := s.AssetExists(ctx, input.Id)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 	if exists {
 		return fmt.Errorf("the asset %s already exists", input.Id)
 	}
 
 	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
 	CreatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
@@ -60,9 +56,7 @@ func (s *SmartContract) CreateNstdaStaff(
 		CreatedAt: CreatedAt,
 	}
 	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
@@ -78,14 +72,10 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	asset, err := s.ReadAsset(ctx, input.Id)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	if clientID != asset.Owner {
 		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
@@ -98,9 +88,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
@@ -109,14 +97,10 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
 
 	asset, err := s.ReadAsset(ctx, id)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	if clientID != asset.Owner {
 		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
@@ -128,14 +112,10 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, id string, newOwner string) error {
 
 	asset, err := s.ReadAsset(ctx, id)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	if clientID != asset.Owner {
 		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
@@ -143,9 +123,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
 	asset.Owner = newOwner
 	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
+ HandleError(err);
 
 	return ctx.GetStub().PutState(id, assetJSON)
 }
