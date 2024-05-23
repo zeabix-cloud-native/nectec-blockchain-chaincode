@@ -1,7 +1,6 @@
 package farmer
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -24,7 +23,7 @@ func (s *SmartContract) CreateFarmer(
 	entityFarmer := entity.TransectionFarmer{}
 	inputInterface, err := issuer.Unmarshal(args, entityFarmer)
 
-	HandleError(err);
+	issuer.HandleError(err)
 	input := inputInterface.(*entity.TransectionFarmer)
 
 	// err := ctx.GetClientIdentity().AssertAttributeValue("farmer.creator", "true")
@@ -37,14 +36,14 @@ func (s *SmartContract) CreateFarmer(
 		return fmt.Errorf("submitting client not authorized to create asset, does not have farmer.creator role")
 	}
 
-	exists, err := s.AssetExists(ctx, input.Id)
-	HandleError(err);
+	exists, err := issuer.AssetExists(ctx, input.Id)
+	issuer.HandleError(err)
 	if exists {
 		return fmt.Errorf("the asset %s already exists", input.Id)
 	}
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	HandleError(err);
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
 	CreatedAt := issuer.GetTimeNow()
 
@@ -57,7 +56,7 @@ func (s *SmartContract) CreateFarmer(
 		CreatedAt: CreatedAt,
 	}
 	assetJSON, err := json.Marshal(asset)
-	HandleError(err);
+	issuer.HandleError(err)
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
@@ -66,14 +65,14 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	args string) error {
 	entityType := entity.TransectionFarmer{}
 	inputInterface, err := issuer.Unmarshal(args, entityType)
-	HandleError(err);
+	issuer.HandleError(err)
 	input := inputInterface.(*entity.TransectionFarmer)
 
 	asset, err := s.ReadAsset(ctx, input.Id)
-	HandleError(err);
+	issuer.HandleError(err)
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	HandleError(err);
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
 	if clientID != asset.Owner {
 		return fmt.Errorf(entity.UNAUTHORIZE)
@@ -86,19 +85,18 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.UpdatedAt = UpdatedAt
 
 	assetJSON, err := json.Marshal(asset)
-	HandleError(err);
+	issuer.HandleError(err)
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
-// DeleteAsset deletes a given asset from the world state.
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
 
 	asset, err := s.ReadAsset(ctx, id)
-	HandleError(err);
+	issuer.HandleError(err)
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	HandleError(err);
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
 	if clientID != asset.Owner {
 		return fmt.Errorf(entity.UNAUTHORIZE)
@@ -110,10 +108,10 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, id string, newOwner string) error {
 
 	asset, err := s.ReadAsset(ctx, id)
-	HandleError(err);
+	issuer.HandleError(err)
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	HandleError(err);
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
 	if clientID != asset.Owner {
 		return fmt.Errorf(entity.UNAUTHORIZE)
@@ -121,7 +119,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
 	asset.Owner = newOwner
 	assetJSON, err := json.Marshal(asset)
-	HandleError(err);
+	issuer.HandleError(err)
 
 	return ctx.GetStub().PutState(id, assetJSON)
 }
@@ -170,48 +168,24 @@ func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface
 		return nil, fmt.Errorf(issuer.SKIPOVER)
 	}
 
-	assets, err := core.FetchResultsWithPagination(ctx, input)
+	arrFarmer, err := core.FetchResultsWithPagination(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	sort.Slice(assets, func(i, j int) bool {
-		return assets[i].UpdatedAt.Before(assets[j].UpdatedAt)
+	sort.Slice(arrFarmer, func(i, j int) bool {
+		return arrFarmer[i].UpdatedAt.Before(arrFarmer[j].UpdatedAt)
 	})
 
-	if len(assets) == 0 {
-		assets = []*entity.TransectionReponse{}
+	if len(arrFarmer) == 0 {
+		arrFarmer = []*entity.TransectionReponse{}
 	}
 
 	return &entity.GetAllReponse{
 		Data:  "All Farmer",
-		Obj:   assets,
+		Obj:   arrFarmer,
 		Total: total,
 	}, nil
-}
-
-// AssetExists returns true when asset with given ID exists in world state
-func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
-
-	assetJSON, err := ctx.GetStub().GetState(id)
-	if err != nil {
-		return false, fmt.Errorf("failed to read from world state: %v", err)
-	}
-
-	return assetJSON != nil, nil
-}
-
-func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
-
-	b64ID, err := ctx.GetClientIdentity().GetID()
-	if err != nil {
-		return "", fmt.Errorf("failed to read clientID: %v", err)
-	}
-	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
-	if err != nil {
-		return "", fmt.Errorf("failed to base64 decode clientID: %v", err)
-	}
-	return string(decodeID), nil
 }
 
 func (s *SmartContract) FilterFarmer(ctx contractapi.TransactionContextInterface, key, value string) ([]*entity.TransectionFarmer, error) {
@@ -221,7 +195,7 @@ func (s *SmartContract) FilterFarmer(ctx contractapi.TransactionContextInterface
 	}
 	defer resultsIterator.Close()
 
-	var assets []*entity.TransectionFarmer
+	var assetFarmer []*entity.TransectionFarmer
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
@@ -240,14 +214,14 @@ func (s *SmartContract) FilterFarmer(ctx contractapi.TransactionContextInterface
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assetFarmer = append(assetFarmer, &asset)
 		}
 	}
 
-	sort.Slice(assets, func(i, j int) bool {
-		return assets[i].UpdatedAt.After(assets[j].UpdatedAt)
+	sort.Slice(assetFarmer, func(i, j int) bool {
+		return assetFarmer[i].UpdatedAt.After(assetFarmer[j].UpdatedAt)
 	})
-	return assets, nil
+	return assetFarmer, nil
 }
 
 func (s *SmartContract) GetHistoryForKey(ctx contractapi.TransactionContextInterface, key string) ([]*entity.TransactionHistory, error) {
@@ -355,15 +329,15 @@ func (s *SmartContract) CreateFarmerCsv(
 			return fmt.Errorf("failed to get submitting client's MSP ID: %v", err)
 		}
 
-		exists, err := s.AssetExists(ctx, input.Id)
+		existFarmer, err := issuer.AssetExists(ctx, input.Id)
 		if err != nil {
 			return fmt.Errorf("error checking if asset exists: %v", err)
 		}
-		if exists {
+		if existFarmer {
 			return fmt.Errorf("the asset %s already exists", input.Id)
 		}
 
-		clientID, err := s.GetSubmittingClientIdentity(ctx)
+		clientID, err := issuer.GetIdentity(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get submitting client's identity: %v", err)
 		}
@@ -397,14 +371,6 @@ func (s *SmartContract) CreateFarmerCsv(
 		return fmt.Errorf("failed to marshal asset JSON: %v", err)
 	}
 	ctx.GetStub().SetEvent("batchCreatedUserEvent", eventPayloadJSON)
-
-	return nil
-}
-
-func HandleError(err error) error {
-	if err != nil {
-		return err
-	}
 
 	return nil
 }

@@ -177,7 +177,7 @@ func (s *SmartContract) GetAllRegulator(ctx contractapi.TransactionContextInterf
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
-		return issuer.ReturnError(issuer.DATAUNMARSHAL)
+		return nil, issuer.ReturnError(issuer.DATAUNMARSHAL)
 	}
 
 	limit := input.Limit
