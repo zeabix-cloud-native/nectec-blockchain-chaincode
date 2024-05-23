@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer"
@@ -48,16 +47,15 @@ func (s *SmartContract) CreateRegulator(
 		return err
 	}
 
-	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
-	CreatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+	CreatedR := issuer.GetTimeNow()
 
 	asset := entity.TransectionRegulator{
 		Id:        input.Id,
 		CertId:    input.CertId,
 		Owner:     clientID,
 		OrgName:   orgName,
-		UpdatedAt: CreatedAt,
-		CreatedAt: CreatedAt,
+		UpdatedAt: CreatedR,
+		CreatedAt: CreatedR,
 	}
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -90,12 +88,12 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	if clientID != asset.Owner {
 		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
-	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
-	UpdatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+
+	UpdatedR := issuer.GetTimeNow()
 
 	asset.Id = input.Id
 	asset.CertId = input.CertId
-	asset.UpdatedAt = UpdatedAt
+	asset.UpdatedAt = UpdatedR
 
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
@@ -105,7 +103,6 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
-// DeleteAsset deletes a given asset from the world state.
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
 
 	asset, err := s.ReadAsset(ctx, id)
@@ -252,7 +249,6 @@ func (s *SmartContract) GetAllRegulator(ctx contractapi.TransactionContextInterf
 	}, nil
 }
 
-// AssetExists returns true when asset with given ID exists in world state
 func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
 
 	assetJSON, err := ctx.GetStub().GetState(id)
