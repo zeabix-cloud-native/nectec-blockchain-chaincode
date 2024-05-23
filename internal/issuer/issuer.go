@@ -76,7 +76,7 @@ func ReturnError(data string) error {
 }
 
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string, asset map[string]interface{}) error {
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
+	clientID, err := s.GetIdentity(ctx)
 	if err != nil {
 		return err
 	}
