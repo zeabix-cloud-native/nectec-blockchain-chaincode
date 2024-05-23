@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	UNAUTHORIZE string = "client is not authorized to delete this asset"
-	TIMEFORMAT  string = "2006-01-02T15:04:05Z"
-	SKIPOVER    string = "skip over total data"
+	UNAUTHORIZE   string = "client is not authorized this asset"
+	TIMEFORMAT    string = "2006-01-02T15:04:05Z"
+	SKIPOVER      string = "skip over total data"
+	DATAUNMARSHAL string = "unmarshal json string"
 )
 
 type GetAllType struct {
@@ -107,4 +108,8 @@ func GetAllNotFilter(ctx contractapi.TransactionContextInterface, input GetAllTy
 	}
 
 	return results, nil
+}
+
+func ReturnError(data string) error {
+	return fmt.Errorf(data)
 }
