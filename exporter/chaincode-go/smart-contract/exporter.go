@@ -83,21 +83,21 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.CertId = input.CertId
 	asset.UpdatedAt = UpdatedTime
 
-	assetJSON, err := json.Marshal(asset)
-	issuer.HandleError(err)
+	assetJSON, errE := json.Marshal(asset)
+	issuer.HandleError(errE)
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
+	assetE, err := s.ReadAsset(ctx, id)
 	issuer.HandleError(err)
 
-	clientID, err := issuer.GetIdentity(ctx)
+	clientIDExporter, err := issuer.GetIdentity(ctx)
 	issuer.HandleError(err)
 
-	if clientID != asset.Owner {
+	if clientIDExporter != assetE.Owner {
 		return fmt.Errorf(issuer.UNAUTHORIZE)
 	}
 
@@ -106,18 +106,18 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, id string, newOwner string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
+	assetE, err := s.ReadAsset(ctx, id)
 	issuer.HandleError(err)
 
 	clientID, err := issuer.GetIdentity(ctx)
 	issuer.HandleError(err)
 
-	if clientID != asset.Owner {
+	if clientID != assetE.Owner {
 		return fmt.Errorf(issuer.UNAUTHORIZE)
 	}
 
-	asset.Owner = newOwner
-	assetJSON, err := json.Marshal(asset)
+	assetE.Owner = newOwner
+	assetJSON, err := json.Marshal(assetE)
 	issuer.HandleError(err)
 	return ctx.GetStub().PutState(id, assetJSON)
 }
