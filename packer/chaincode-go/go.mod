@@ -2,7 +2,10 @@ module github.com/zeabix-cloud-native/nstda-blockchain-chaincode/packer/chaincod
 
 go 1.17
 
-require github.com/hyperledger/fabric-contract-api-go v1.2.1
+require (
+	github.com/hyperledger/fabric-contract-api-go v1.2.1
+	github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer v0.0.0-20240523103738-b15f088fbf94
+)
 
 require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
