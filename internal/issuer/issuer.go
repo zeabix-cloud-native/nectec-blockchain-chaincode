@@ -65,7 +65,7 @@ func GetTimeNow() time.Time {
 	return CreatedAt
 }
 
-func GetAllNotFilter(ctx contractapi.TransactionContextInterface, input *GetAllType, resultType interface{}) ([]interface{}, error) {
+func GetAllNotFilter(ctx contractapi.TransactionContextInterface, input GetAllType, resultType interface{}) ([]interface{}, error) {
 	var filter = map[string]interface{}{}
 
 	selector := map[string]interface{}{
