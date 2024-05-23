@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
-	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/core"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/entity"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer"
 )
@@ -61,43 +60,6 @@ func (s *SmartContract) CreateFarmer(
 		UpdatedAt: CreatedAt,
 		CreatedAt: CreatedAt,
 	}
-	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
-
-	return ctx.GetStub().PutState(input.Id, assetJSON)
-}
-
-func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
-	args string) error {
-	entityType := entity.TransectionFarmer{}
-	inputInterface, err := issuer.Unmarshal(args, entityType)
-	if err != nil {
-		return err
-	}
-	input := inputInterface.(*entity.TransectionFarmer)
-
-	asset, err := s.ReadAsset(ctx, input.Id)
-	if err != nil {
-		return err
-	}
-
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
-
-	if clientID != asset.Owner {
-		return fmt.Errorf(entity.UNAUTHORIZE)
-	}
-
-	UpdatedAt := issuer.GetTimeNow()
-
-	asset.Id = input.Id
-	asset.CertId = input.CertId
-	asset.UpdatedAt = UpdatedAt
-
 	assetJSON, err := json.Marshal(asset)
 	if err != nil {
 		return err
@@ -168,51 +130,6 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	}
 
 	return &asset, nil
-}
-
-func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
-
-	var filter = map[string]interface{}{}
-
-	entityGetAll := entity.FilterGetAll{}
-	inputInterface, err := issuer.Unmarshal(args, entityGetAll)
-	if err != nil {
-		return nil, err
-	}
-	input := inputInterface.(*entity.FilterGetAll)
-
-	queryString, err := issuer.BuildQueryString(filter)
-	if err != nil {
-		return nil, err
-	}
-
-	total, err := issuer.CountTotalResults(ctx, queryString)
-	if err != nil {
-		return nil, err
-	}
-
-	if input.Skip > total {
-		return nil, fmt.Errorf(issuer.SKIPOVER)
-	}
-
-	assets, err := core.FetchResultsWithPagination(ctx, input)
-	if err != nil {
-		return nil, err
-	}
-
-	sort.Slice(assets, func(i, j int) bool {
-		return assets[i].UpdatedAt.Before(assets[j].UpdatedAt)
-	})
-
-	if len(assets) == 0 {
-		assets = []*entity.TransectionReponse{}
-	}
-
-	return &entity.GetAllReponse{
-		Data:  "All Farmer",
-		Obj:   assets,
-		Total: total,
-	}, nil
 }
 
 // AssetExists returns true when asset with given ID exists in world state
