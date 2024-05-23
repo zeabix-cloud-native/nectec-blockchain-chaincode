@@ -1,6 +1,7 @@
 package issuer
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -15,6 +16,10 @@ const (
 	SKIPOVER      string = "skip over total data"
 	DATAUNMARSHAL string = "unmarshal json string"
 )
+
+type SmartContract struct {
+	contractapi.Contract
+}
 
 type GetAllType struct {
 	Skip  int `json:"skip"`
@@ -69,3 +74,36 @@ func GetTimeNow() time.Time {
 func ReturnError(data string) error {
 	return fmt.Errorf(data)
 }
+
+func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string, asset map[string]interface{}) error {
+	clientID, err := s.GetSubmittingClientIdentity(ctx)
+	if err != nil {
+		return err
+	}
+
+	owner, ok := asset["Owner"].(string)
+	if !ok {
+		return fmt.Errorf("failed to get asset owner")
+	}
+
+	if clientID != owner {
+		return fmt.Errorf(UNAUTHORIZE)
+	}
+
+	return ctx.GetStub().DelState(id)
+}
+
+func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
+
+	b64ID, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return "", fmt.Errorf("failed to read clientID: %v", err)
+	}
+	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to base64 decode clientID: %v", err)
+	}
+	return string(decodeID), nil
+}
+
+
