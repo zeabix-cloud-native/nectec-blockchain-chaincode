@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
 	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/regulator/chaincode-go/entity"
 )
 
@@ -26,13 +26,13 @@ func (s *SmartContract) CreateRegulator(
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
-		return fmt.Errorf("unmarshal json string")
+		return issuer.ReturnError(issuer.DATAUNMARSHAL)
 	}
 
-	err := ctx.GetClientIdentity().AssertAttributeValue("regulator.creator", "true")
+	// err := ctx.GetClientIdentity().AssertAttributeValue("regulator.creator", "true")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
-		return fmt.Errorf("submitting client not authorized to create asset, does not have regulator.creator role")
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
 	exists, err := s.AssetExists(ctx, input.Id)
@@ -74,7 +74,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
-		return fmt.Errorf("unmarshal json string")
+		return issuer.ReturnError(issuer.DATAUNMARSHAL)
 	}
 
 	asset, err := s.ReadAsset(ctx, input.Id)
@@ -88,7 +88,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
 	UpdatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
@@ -119,7 +119,7 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
 	return ctx.GetStub().DelState(id)
@@ -138,7 +138,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	}
 
 	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
 	asset.Owner = newOwner
@@ -165,7 +165,6 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Error creating regulator chaincode: %#c", asset)
 
 	return &asset, nil
 }
@@ -181,7 +180,7 @@ func (s *SmartContract) GetAllRegulator(ctx contractapi.TransactionContextInterf
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
-		return nil, fmt.Errorf("unmarshal json string")
+		return issuer.ReturnError(issuer.DATAUNMARSHAL)
 	}
 
 	limit := input.Limit
