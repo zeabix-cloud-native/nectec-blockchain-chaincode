@@ -93,7 +93,7 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	return ctx.GetStub().DelState(id)
 }
 
-func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
+func (s *SmartContract) GetIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
 
 	b64ID, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
@@ -105,5 +105,3 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 	}
 	return string(decodeID), nil
 }
-
-
