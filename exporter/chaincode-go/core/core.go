@@ -24,26 +24,26 @@ func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, inp
 		return nil, err
 	}
 
-	queryFarmer, _, err := ctx.GetStub().GetQueryResultWithPagination(string(getStringE), int32(input.Limit), "")
+	queryExporter, _, err := ctx.GetStub().GetQueryResultWithPagination(string(getStringE), int32(input.Limit), "")
 	if err != nil {
 		return nil, err
 	}
-	defer queryFarmer.Close()
+	defer queryExporter.Close()
 
 	var dataExporter []*entity.TransectionReponse
-	for queryFarmer.HasNext() {
-		queryRes, err := queryFarmer.Next()
+	for queryExporter.HasNext() {
+		queryRes, err := queryExporter.Next()
 		if err != nil {
 			return nil, err
 		}
 
-		var dataF entity.TransectionReponse
-		err = json.Unmarshal(queryRes.Value, &dataF)
+		var dataE entity.TransectionReponse
+		err = json.Unmarshal(queryRes.Value, &dataE)
 		if err != nil {
 			return nil, err
 		}
 
-		dataExporter = append(dataExporter, &dataF)
+		dataExporter = append(dataExporter, &dataE)
 	}
 
 	return dataExporter, nil
