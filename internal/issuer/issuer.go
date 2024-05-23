@@ -93,7 +93,7 @@ func ReturnError(data string) error {
 // 	return ctx.GetStub().DelState(id)
 // }
 
-func (s *SmartContract) GetIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
+func GetIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
 
 	b64ID, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
