@@ -75,7 +75,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	issuer.HandleError(err)
 
 	if clientID != asset.Owner {
-		return fmt.Errorf(entity.UNAUTHORIZE)
+		return fmt.Errorf(issuer.UNAUTHORIZE)
 	}
 
 	UpdatedAt := issuer.GetTimeNow()
@@ -99,7 +99,7 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 	issuer.HandleError(err)
 
 	if clientID != asset.Owner {
-		return fmt.Errorf(entity.UNAUTHORIZE)
+		return fmt.Errorf(issuer.UNAUTHORIZE)
 	}
 
 	return ctx.GetStub().DelState(id)
@@ -114,7 +114,7 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 	issuer.HandleError(err)
 
 	if clientID != asset.Owner {
-		return fmt.Errorf(entity.UNAUTHORIZE)
+		return fmt.Errorf(issuer.UNAUTHORIZE)
 	}
 
 	asset.Owner = newOwner
