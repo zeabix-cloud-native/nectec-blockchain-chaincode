@@ -76,7 +76,7 @@ func ReturnError(data string) error {
 }
 
 // func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string, asset map[string]interface{}) error {
-// 	clientID, err := s.GetIdentity(ctx)
+// 	clientID, err := GetIdentity(ctx)
 // 	if err != nil {
 // 		return err
 // 	}
@@ -104,4 +104,20 @@ func GetIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
 		return "", fmt.Errorf("failed to base64 decode clientID: %v", err)
 	}
 	return string(decodeID), nil
+}
+func AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
+
+	assetJSON, err := ctx.GetStub().GetState(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to read from world state: %v", err)
+	}
+
+	return assetJSON != nil, nil
+}
+
+func HandleError(err error) error {
+	if err != nil {
+		return err
+	}
+	return nil
 }
