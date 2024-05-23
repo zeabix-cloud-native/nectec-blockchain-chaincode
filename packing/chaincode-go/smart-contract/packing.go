@@ -26,7 +26,7 @@ func (s *SmartContract) CreatePacking(
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
-		return fmt.Errorf("Unmarshal json string")
+		return fmt.Errorf("unmarshal json string")
 	}
 
 	err := ctx.GetClientIdentity().AssertAttributeValue("packing.creator", "true")
@@ -86,7 +86,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	errInput := json.Unmarshal([]byte(args), &input)
 
 	if errInput != nil {
-		return fmt.Errorf("Unmarshal json string")
+		return fmt.Errorf("unmarshal json string")
 	}
 
 	asset, err := s.ReadAsset(ctx, input.Id)
@@ -198,7 +198,7 @@ func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterfac
 
 	errInput := json.Unmarshal([]byte(args), &input)
 	if errInput != nil {
-		return nil, fmt.Errorf("Unmarshal json string")
+		return nil, fmt.Errorf("unmarshal json string")
 	}
 
 	if input.PackerId != nil {
@@ -321,7 +321,7 @@ func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionC
 
 	b64ID, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
-		return "", fmt.Errorf("Failed to read clientID: %v", err)
+		return "", fmt.Errorf("failed to read clientID: %v", err)
 	}
 	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
 	if err != nil {
