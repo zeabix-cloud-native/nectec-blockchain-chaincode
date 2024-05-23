@@ -1,7 +1,6 @@
 package gap
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -22,11 +21,9 @@ func (s *SmartContract) CreateGAP(
 	ctx contractapi.TransactionContextInterface,
 	args string,
 ) error {
-	entityGAP := entity.TransectionGAP{}
-	inputInterface, err := issuer.Unmarshal(args, entityGAP)
-	if err != nil {
-		return err
-	}
+	entityGap := entity.TransectionGAP{}
+	inputInterface, err := issuer.Unmarshal(args, entityGap)
+	issuer.HandleError(err)
 	input := inputInterface.(*entity.TransectionGAP)
 
 	// err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
@@ -35,20 +32,16 @@ func (s *SmartContract) CreateGAP(
 		return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role1")
 	}
 
-	exists, err := s.AssetExists(ctx, input.Id)
-	if err != nil {
-		return err
-	}
-	if exists {
+	existsGap, err := issuer.AssetExists(ctx, input.Id)
+	issuer.HandleError(err)
+	if existsGap {
 		return fmt.Errorf("the asset %s already exists", input.Id)
 	}
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+	clientIDGap, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
-	CreatedAt := issuer.GetTimeNow()
+	TimeGap := issuer.GetTimeNow()
 
 	asset := entity.TransectionGAP{
 		Id:          input.Id,
@@ -64,44 +57,34 @@ func (s *SmartContract) CreateGAP(
 		UpdatedDate: input.UpdatedDate,
 		Source:      input.Source,
 		FarmerID:    input.FarmerID,
-		Owner:       clientID,
+		Owner:       clientIDGap,
 		OrgName:     orgName,
-		UpdatedAt:   CreatedAt,
-		CreatedAt:   CreatedAt,
+		UpdatedAt:   TimeGap,
+		CreatedAt:   TimeGap,
 	}
 	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
-	fmt.Println(assetJSON)
+	issuer.HandleError(err)
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, args string) error {
 
-	entityGAP := entity.TransectionGAP{}
-	inputInterface, err := issuer.Unmarshal(args, entityGAP)
-	if err != nil {
-		return err
-	}
+	entityGap := entity.TransectionGAP{}
+	inputInterface, err := issuer.Unmarshal(args, entityGap)
+	issuer.HandleError(err)
 	input := inputInterface.(*entity.TransectionGAP)
 
 	asset, err := s.ReadAsset(ctx, input.Id)
-	if err != nil {
-		return err
-	}
+	issuer.HandleError(err)
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
-
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 	if clientID != asset.Owner {
-		return fmt.Errorf(issuer.UNAUTHORIZE)
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
-	UpdatedAt := issuer.GetTimeNow()
+	UpdatedGap := issuer.GetTimeNow()
 
 	asset.Id = input.Id
 	asset.CertID = input.CertID
@@ -116,59 +99,44 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.UpdatedDate = input.UpdatedDate
 	asset.Source = input.Source
 	asset.FarmerID = input.FarmerID
-	asset.UpdatedAt = UpdatedAt
+	asset.UpdatedAt = UpdatedGap
 
-	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
+	assetJSON, errGap := json.Marshal(asset)
+	issuer.HandleError(errGap)
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
-// DeleteAsset deletes a given asset from the world state.
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
-	if err != nil {
-		return err
-	}
+	assetGap, err := s.ReadAsset(ctx, id)
+	issuer.HandleError(err)
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+	clientIDGap, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
-	if clientID != asset.Owner {
-		return fmt.Errorf(issuer.UNAUTHORIZE)
+	if clientIDGap != assetGap.Owner {
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
 	return ctx.GetStub().DelState(id)
 }
 
-// TransferAsset updates the owner field of asset with given id in world state.
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, id string, newOwner string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
-	if err != nil {
-		return err
+	assetGap, err := s.ReadAsset(ctx, id)
+	issuer.HandleError(err)
+
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
+
+	if clientID != assetGap.Owner {
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
-
-	if clientID != asset.Owner {
-		return fmt.Errorf(issuer.UNAUTHORIZE)
-	}
-
-	asset.Owner = newOwner
-	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
-
+	assetGap.Owner = newOwner
+	assetJSON, err := json.Marshal(assetGap)
+	issuer.HandleError(err)
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 
@@ -192,17 +160,17 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 }
 func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterface, certID string) (*entity.GetByCertIDReponse, error) {
 	// Get the asset using CertID
-	queryKey := fmt.Sprintf(`{"selector":{"certId":"%s"}}`, certID)
+	queryKeyGap := fmt.Sprintf(`{"selector":{"certId":"%s"}}`, certID)
 
-	resultsIterator, err := ctx.GetStub().GetQueryResult(queryKey)
+	resultsIteratorGap, err := ctx.GetStub().GetQueryResult(queryKeyGap)
 	var asset *entity.TransectionReponse
 	resData := "Get gap by certID"
 	if err != nil {
 		return nil, fmt.Errorf("error querying chaincode: %v", err)
 	}
-	defer resultsIterator.Close()
+	defer resultsIteratorGap.Close()
 
-	if !resultsIterator.HasNext() {
+	if !resultsIteratorGap.HasNext() {
 		resData = "Not found gap by certID"
 
 		return &entity.GetByCertIDReponse{
@@ -211,7 +179,7 @@ func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterfa
 		}, nil
 	}
 
-	queryResponse, err := resultsIterator.Next()
+	queryResponse, err := resultsIteratorGap.Next()
 	if err != nil {
 		return nil, fmt.Errorf("error getting next query result: %v", err)
 	}
@@ -230,29 +198,29 @@ func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterfa
 
 func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	entityGetAll := entity.FilterGetAll{}
-	inputInterface, err := issuer.Unmarshal(args, entityGetAll)
+	entityGetAllGap := entity.FilterGetAll{}
+	interfaceGap, err := issuer.Unmarshal(args, entityGetAllGap)
 	if err != nil {
 		return nil, err
 	}
-	input := inputInterface.(*entity.FilterGetAll)
-	filter := core.SetFilter(input)
+	inputGap := interfaceGap.(*entity.FilterGetAll)
+	filterGap := core.SetFilter(inputGap)
 
-	queryString, err := issuer.BuildQueryString(filter)
-	if err != nil {
-		return nil, err
-	}
-
-	total, err := issuer.CountTotalResults(ctx, queryString)
+	queryStringGap, err := issuer.BuildQueryString(filterGap)
 	if err != nil {
 		return nil, err
 	}
 
-	if input.Skip > total {
+	total, err := issuer.CountTotalResults(ctx, queryStringGap)
+	if err != nil {
+		return nil, err
+	}
+
+	if inputGap.Skip > total {
 		return nil, fmt.Errorf(issuer.SKIPOVER)
 	}
 
-	assets, err := core.FetchResultsWithPagination(ctx, input, filter)
+	assets, err := core.FetchResultsWithPagination(ctx, inputGap, filterGap)
 	if err != nil {
 		return nil, err
 	}
@@ -272,29 +240,6 @@ func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface, a
 	}, nil
 }
 
-func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
-
-	assetJSON, err := ctx.GetStub().GetState(id)
-	if err != nil {
-		return false, fmt.Errorf("failed to read from world state: %v", err)
-	}
-
-	return assetJSON != nil, nil
-}
-
-func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
-
-	b64ID, err := ctx.GetClientIdentity().GetID()
-	if err != nil {
-		return "", fmt.Errorf("failed to read clientID: %v", err)
-	}
-	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
-	if err != nil {
-		return "", fmt.Errorf("failed to base64 decode clientID: %v", err)
-	}
-	return string(decodeID), nil
-}
-
 func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, key, value string) ([]*entity.TransectionGAP, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
@@ -302,7 +247,7 @@ func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, k
 	}
 	defer resultsIterator.Close()
 
-	var assets []*entity.TransectionGAP
+	var assetGap []*entity.TransectionGAP
 	for resultsIterator.HasNext() {
 		queryResponse, err := resultsIterator.Next()
 		if err != nil {
@@ -321,15 +266,15 @@ func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, k
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assetGap = append(assetGap, &asset)
 		}
 	}
 
-	sort.Slice(assets, func(i, j int) bool {
-		return assets[i].UpdatedAt.After(assets[j].UpdatedAt)
+	sort.Slice(assetGap, func(i, j int) bool {
+		return assetGap[i].UpdatedAt.After(assetGap[j].UpdatedAt)
 	})
 
-	return assets, nil
+	return assetGap, nil
 }
 
 func (s *SmartContract) CreateGapCsv(
@@ -338,36 +283,31 @@ func (s *SmartContract) CreateGapCsv(
 ) error {
 	var inputs []entity.TransectionGAP
 
-	errInput := json.Unmarshal([]byte(args), &inputs)
-	if errInput != nil {
-		return fmt.Errorf("failed to unmarshal JSON array: %v", errInput)
-	}
+	errInputGap := json.Unmarshal([]byte(args), &inputs)
+	issuer.HandleError(errInputGap)
 
 	for _, input := range inputs {
 		// err := ctx.GetClientIdentity().AssertAttributeValue("gap.creator", "true")
-		// if err != nil {
-		// 	return fmt.Errorf("submitting client not authorized to create asset, does not have gap.creator role1: %v", err)
-		// }
 
-		orgName, err := ctx.GetClientIdentity().GetMSPID()
+		orgNameGap, err := ctx.GetClientIdentity().GetMSPID()
 		if err != nil {
 			return fmt.Errorf("failed to get submitting client's MSP ID: %v", err)
 		}
 
-		exists, err := s.AssetExists(ctx, input.Id)
+		existGap, err := issuer.AssetExists(ctx, input.Id)
 		if err != nil {
 			return fmt.Errorf("error checking if asset exists: %v", err)
 		}
-		if exists {
+		if existGap {
 			return fmt.Errorf("the asset %s already exists", input.Id)
 		}
 
-		clientID, err := s.GetSubmittingClientIdentity(ctx)
+		clientIDGap, err := issuer.GetIdentity(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get submitting client's identity: %v", err)
 		}
 
-		asset := entity.TransectionGAP{
+		assetGap := entity.TransectionGAP{
 			Id:          input.Id,
 			CertID:      input.CertID,
 			AreaCode:    input.AreaCode,
@@ -381,10 +321,10 @@ func (s *SmartContract) CreateGapCsv(
 			UpdatedDate: input.UpdatedDate,
 			Source:      input.Source,
 			FarmerID:    input.FarmerID,
-			Owner:       clientID,
-			OrgName:     orgName,
+			Owner:       clientIDGap,
+			OrgName:     orgNameGap,
 		}
-		assetJSON, err := json.Marshal(asset)
+		assetJSON, err := json.Marshal(assetGap)
 		if err != nil {
 			return fmt.Errorf("failed to marshal asset JSON: %v", err)
 		}
@@ -410,18 +350,18 @@ func (s *SmartContract) MarkUsedGap(ctx contractapi.TransactionContextInterface,
 		return fmt.Errorf("unmarshal json string: %v", errInput)
 	}
 
-	queryKey := fmt.Sprintf(`{"selector":{"certId":"%s"}}`, input.CertId)
-	resultsIterator, err := ctx.GetStub().GetQueryResult(queryKey)
+	queryKeyG := fmt.Sprintf(`{"selector":{"certId":"%s"}}`, input.CertId)
+	resultsIteratorG, err := ctx.GetStub().GetQueryResult(queryKeyG)
 	if err != nil {
 		return fmt.Errorf("error querying chaincode: %v", err)
 	}
-	defer resultsIterator.Close()
+	defer resultsIteratorG.Close()
 
-	if !resultsIterator.HasNext() {
+	if !resultsIteratorG.HasNext() {
 		return fmt.Errorf("no asset found with certId: %s", input.CertId)
 	}
 
-	queryResponse, err := resultsIterator.Next()
+	queryResponse, err := resultsIteratorG.Next()
 	if err != nil {
 		return fmt.Errorf("error iterating query results: %v", err)
 	}
