@@ -75,23 +75,23 @@ func ReturnError(data string) error {
 	return fmt.Errorf(data)
 }
 
-func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string, asset map[string]interface{}) error {
-	clientID, err := s.GetIdentity(ctx)
-	if err != nil {
-		return err
-	}
+// func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string, asset map[string]interface{}) error {
+// 	clientID, err := s.GetIdentity(ctx)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	owner, ok := asset["Owner"].(string)
-	if !ok {
-		return fmt.Errorf("failed to get asset owner")
-	}
+// 	owner, ok := asset["Owner"].(string)
+// 	if !ok {
+// 		return fmt.Errorf("failed to get asset owner")
+// 	}
 
-	if clientID != owner {
-		return fmt.Errorf(UNAUTHORIZE)
-	}
+// 	if clientID != owner {
+// 		return fmt.Errorf(UNAUTHORIZE)
+// 	}
 
-	return ctx.GetStub().DelState(id)
-}
+// 	return ctx.GetStub().DelState(id)
+// }
 
 func (s *SmartContract) GetIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
 
