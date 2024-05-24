@@ -46,20 +46,20 @@ func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, inp
 		selector["limit"] = input.Limit
 	}
 
-	queryString, err := json.Marshal(selector)
+	getStringPacking, err := json.Marshal(selector)
 	if err != nil {
 		return nil, err
 	}
 
-	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryString), int32(input.Limit), "")
+	queryPacking, _, err := ctx.GetStub().GetQueryResultWithPagination(string(getStringPacking), int32(input.Limit), "")
 	if err != nil {
 		return nil, err
 	}
-	defer queryResults.Close()
+	defer queryPacking.Close()
 
-	var assets []*entity.TransectionReponse
-	for queryResults.HasNext() {
-		queryResponse, err := queryResults.Next()
+	var dataPacking []*entity.TransectionReponse
+	for queryPacking.HasNext() {
+		queryResponse, err := queryPacking.Next()
 		if err != nil {
 			return nil, err
 		}
@@ -70,8 +70,8 @@ func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, inp
 			return nil, err
 		}
 
-		assets = append(assets, &asset)
+		dataPacking = append(dataPacking, &asset)
 	}
 
-	return assets, nil
+	return dataPacking, nil
 }
