@@ -1,14 +1,13 @@
 package packing
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
-	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/packing/chaincode-go/core"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/packing/chaincode-go/entity"
 )
 
@@ -20,36 +19,27 @@ func (s *SmartContract) CreatePacking(
 	ctx contractapi.TransactionContextInterface,
 	args string,
 ) error {
+	entityPacking := entity.TransectionPacking{}
+	inputInterface, err := issuer.Unmarshal(args, entityPacking)
+	issuer.HandleError(err)
+	input := inputInterface.(*entity.TransectionPacking)
 
-	var input entity.TransectionPacking
-
-	errInput := json.Unmarshal([]byte(args), &input)
-
-	if errInput != nil {
-		return fmt.Errorf("unmarshal json string")
-	}
-
-	err := ctx.GetClientIdentity().AssertAttributeValue("packing.creator", "true")
+	// err := ctx.GetClientIdentity().AssertAttributeValue("packing.creator", "true")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
 	if err != nil {
 		return fmt.Errorf("submitting client not authorized to create asset, does not have packing.creator role")
 	}
 
-	exists, err := s.AssetExists(ctx, input.Id)
-	if err != nil {
-		return err
-	}
-	if exists {
+	existsPacking, err := issuer.AssetExists(ctx, input.Id)
+	issuer.HandleError(err)
+	if existsPacking {
 		return fmt.Errorf("the asset %s already exists", input.Id)
 	}
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+	clientIDPacking, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
-	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
-	CreatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+	TimePacking := issuer.GetTimeNow()
 
 	asset := entity.TransectionPacking{
 		Id:             input.Id,
@@ -66,15 +56,13 @@ func (s *SmartContract) CreatePacking(
 		Gmp:            input.Gmp,
 		Gap:            input.Gap,
 		ProcessStatus:  input.ProcessStatus,
-		Owner:          clientID,
+		Owner:          clientIDPacking,
 		OrgName:        orgName,
-		UpdatedAt:      CreatedAt,
-		CreatedAt:      CreatedAt,
+		UpdatedAt:      TimePacking,
+		CreatedAt:      TimePacking,
 	}
 	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
+	issuer.HandleError(err)
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
@@ -82,24 +70,21 @@ func (s *SmartContract) CreatePacking(
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	args string) error {
 
-	var input entity.TransectionPacking
-	errInput := json.Unmarshal([]byte(args), &input)
-
-	if errInput != nil {
-		return fmt.Errorf("unmarshal json string")
-	}
+	entityPacking := entity.TransectionPacking{}
+	inputInterface, err := issuer.Unmarshal(args, entityPacking)
+	issuer.HandleError(err)
+	input := inputInterface.(*entity.TransectionPacking)
 
 	asset, err := s.ReadAsset(ctx, input.Id)
-	if err != nil {
-		return err
+	issuer.HandleError(err)
+
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
+	if clientID != asset.Owner {
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
-	if asset.FarmerID != input.FarmerID || asset.PackerId != input.PackerId {
-		return fmt.Errorf("FarmerID or PackerId not match")
-	}
-
-	formattedTime := time.Now().Format("2006-01-02T15:04:05Z")
-	UpdatedAt, _ := time.Parse("2006-01-02T15:04:05Z", formattedTime)
+	UpdatedPacking := issuer.GetTimeNow()
 
 	asset.Id = input.Id
 	asset.OrderID = input.OrderID
@@ -115,33 +100,28 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.Gmp = input.Gmp
 	asset.Gap = input.Gap
 	asset.ProcessStatus = input.ProcessStatus
-	asset.UpdatedAt = UpdatedAt
+	asset.UpdatedAt = UpdatedPacking
 
-	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
+	assetJSON, errPacking := json.Marshal(asset)
+	issuer.HandleError(errPacking)
 
 	ctx.GetStub().SetEvent("UpdateAsset", assetJSON)
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
-// DeleteAsset deletes a given asset from the world state.
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
+	assetPacking, err := s.ReadAsset(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+	clientIDPacking, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
-	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
+	if clientIDPacking != assetPacking.Owner {
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
 	return ctx.GetStub().DelState(id)
@@ -149,26 +129,19 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, id string, newOwner string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
-	if err != nil {
-		return err
+	assetPacking, err := s.ReadAsset(ctx, id)
+	issuer.HandleError(err)
+
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
+
+	if clientID != assetPacking.Owner {
+		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
-
-	if clientID != asset.Owner {
-		return fmt.Errorf("submitting client not authorized to update asset, does not own asset")
-	}
-
-	asset.Owner = newOwner
-	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
-
+	assetPacking.Owner = newOwner
+	assetJSON, err := json.Marshal(assetPacking)
+	issuer.HandleError(err)
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 
@@ -187,159 +160,63 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Error creating farmer chaincode: %#c", asset)
 
 	return &asset, nil
 }
 func (s *SmartContract) GetAllPacking(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	var input entity.FilterGetAll
-	var filter = map[string]interface{}{}
-
-	errInput := json.Unmarshal([]byte(args), &input)
-	if errInput != nil {
-		return nil, fmt.Errorf("unmarshal json string")
+	entityGetAllPacking := entity.FilterGetAll{}
+	interfacePacking, err := issuer.Unmarshal(args, entityGetAllPacking)
+	if err != nil {
+		return nil, err
 	}
+	inputPacking := interfacePacking.(*entity.FilterGetAll)
+	filterPacking := core.SetFilter(inputPacking)
 
-	if input.PackerId != nil {
-		filter["packerId"] = *input.PackerId
-	}
-
-	if input.Gap != nil {
-		filter["gap"] = *input.Gap
-	}
-
-	if input.StartDate != nil && input.EndDate != nil {
-		filter["createdAt"] = map[string]interface{}{
-			"$gte": *input.StartDate,
-			"$lte": *input.EndDate,
-		}
-	}
-
-	if input.ForecastWeightFrom != nil && input.ForecastWeightTo != nil {
-		filter["forecastWeight"] = map[string]interface{}{
-			"$gte": *input.ForecastWeightFrom,
-			"$lte": *input.ForecastWeightTo,
-		}
-	}
-
-	if input.ProcessStatus != nil {
-		filter["processStatus"] = *input.ProcessStatus
-	}
-
-	limit := input.Limit
-	skip := input.Skip
-
-	selector := map[string]interface{}{
-		"selector": filter,
-	}
-
-	queryString, err := json.Marshal(selector)
+	queryStringPacking, err := issuer.BuildQueryString(filterPacking)
 	if err != nil {
 		return nil, err
 	}
 
-	resultsIterator, err := ctx.GetStub().GetQueryResult(string(queryString))
-	if err != nil {
-		return nil, err
-	}
-	defer resultsIterator.Close()
-
-	total := 0
-
-	for resultsIterator.HasNext() {
-		_, err := resultsIterator.Next()
-		if err != nil {
-			return nil, err
-		}
-		total++
-	}
-	if skip > total {
-		return nil, fmt.Errorf("Skip Over Total Data")
-	}
-	// Check if skip and limit are provided in the args
-	if skip != 0 || limit != 0 {
-		selector["skip"] = skip
-		selector["limit"] = limit
-	}
-
-	queryStringPagination, err := json.Marshal(selector)
+	total, err := issuer.CountTotalResults(ctx, queryStringPacking)
 	if err != nil {
 		return nil, err
 	}
 
-	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryStringPagination), int32(limit), "")
+	if inputPacking.Skip > total {
+		return nil, fmt.Errorf(issuer.SKIPOVER)
+	}
+
+	arrPacking, err := core.FetchResultsWithPagination(ctx, inputPacking, filterPacking)
 	if err != nil {
 		return nil, err
 	}
-	defer queryResults.Close()
 
-	var assets []*entity.TransectionReponse
-
-	for queryResults.HasNext() {
-		queryResponse, err := queryResults.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		var asset entity.TransectionReponse
-		err = json.Unmarshal(queryResponse.Value, &asset)
-		if err != nil {
-			return nil, err
-		}
-
-		assets = append(assets, &asset)
-	}
-
-	sort.Slice(assets, func(i, j int) bool {
-		return assets[i].UpdatedAt.Before(assets[j].UpdatedAt)
+	sort.Slice(arrPacking, func(i, j int) bool {
+		return arrPacking[i].UpdatedAt.Before(arrPacking[j].UpdatedAt)
 	})
 
-	if len(assets) == 0 {
-		assets = []*entity.TransectionReponse{}
+	if len(arrPacking) == 0 {
+		arrPacking = []*entity.TransectionReponse{}
 	}
 
 	return &entity.GetAllReponse{
 		Data:  "All Packing",
-		Obj:   assets,
+		Obj:   arrPacking,
 		Total: total,
 	}, nil
 }
 
-// AssetExists returns true when asset with given ID exists in world state
-func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
-
-	assetJSON, err := ctx.GetStub().GetState(id)
-	if err != nil {
-		return false, fmt.Errorf("failed to read from world state: %v", err)
-	}
-
-	return assetJSON != nil, nil
-}
-
-func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
-
-	b64ID, err := ctx.GetClientIdentity().GetID()
-	if err != nil {
-		return "", fmt.Errorf("failed to read clientID: %v", err)
-	}
-	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
-	if err != nil {
-		return "", fmt.Errorf("failed to base64 decode clientID: %v", err)
-	}
-	return string(decodeID), nil
-}
-
 func (s *SmartContract) FilterPacking(ctx contractapi.TransactionContextInterface, key, value string) ([]*entity.TransectionPacking, error) {
-	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	resultsIteratorP, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
 	}
-	defer resultsIterator.Close()
+	defer resultsIteratorP.Close()
 
-	var assets []*entity.TransectionPacking
-	for resultsIterator.HasNext() {
-		queryResponse, err := resultsIterator.Next()
+	var assetPacking []*entity.TransectionPacking
+	for resultsIteratorP.HasNext() {
+		queryResponse, err := resultsIteratorP.Next()
 		if err != nil {
 			return nil, err
 		}
@@ -356,13 +233,13 @@ func (s *SmartContract) FilterPacking(ctx contractapi.TransactionContextInterfac
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &asset)
+			assetPacking = append(assetPacking, &asset)
 		}
 	}
 
-	sort.Slice(assets, func(i, j int) bool {
-		return assets[i].UpdatedAt.After(assets[j].UpdatedAt)
+	sort.Slice(assetPacking, func(i, j int) bool {
+		return assetPacking[i].UpdatedAt.After(assetPacking[j].UpdatedAt)
 	})
 
-	return assets, nil
+	return assetPacking, nil
 }

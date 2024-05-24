@@ -1,13 +1,13 @@
 package regulator
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"sort"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer"
+	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/regulator/chaincode-go/core"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/regulator/chaincode-go/entity"
 )
 
@@ -19,14 +19,12 @@ func (s *SmartContract) CreateRegulator(
 	ctx contractapi.TransactionContextInterface,
 	args string,
 ) error {
-
-	var input entity.TransectionRegulator
-
-	errInput := json.Unmarshal([]byte(args), &input)
-
-	if errInput != nil {
-		return issuer.ReturnError(issuer.DATAUNMARSHAL)
+	entityRegulator := entity.TransectionRegulator{}
+	inputInterface, err := issuer.Unmarshal(args, entityRegulator)
+	if err != nil {
+		return err
 	}
+	input := inputInterface.(*entity.TransectionRegulator)
 
 	// err := ctx.GetClientIdentity().AssertAttributeValue("regulator.creator", "true")
 	orgName, err := ctx.GetClientIdentity().GetMSPID()
@@ -34,18 +32,14 @@ func (s *SmartContract) CreateRegulator(
 		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
-	exists, err := s.AssetExists(ctx, input.Id)
-	if err != nil {
-		return err
-	}
-	if exists {
+	existRegulator, err := issuer.AssetExists(ctx, input.Id)
+	issuer.HandleError(err)
+	if existRegulator {
 		return fmt.Errorf("the asset %s already exists", input.Id)
 	}
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
 	CreatedR := issuer.GetTimeNow()
 
@@ -58,9 +52,7 @@ func (s *SmartContract) CreateRegulator(
 		CreatedAt: CreatedR,
 	}
 	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
+	issuer.HandleError(err)
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
@@ -68,22 +60,16 @@ func (s *SmartContract) CreateRegulator(
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	args string) error {
 
-	var input entity.TransectionRegulator
-	errInput := json.Unmarshal([]byte(args), &input)
-
-	if errInput != nil {
-		return issuer.ReturnError(issuer.DATAUNMARSHAL)
-	}
+	entityRegulator := entity.TransectionRegulator{}
+	inputInterface, err := issuer.Unmarshal(args, entityRegulator)
+	issuer.HandleError(err)
+	input := inputInterface.(*entity.TransectionRegulator)
 
 	asset, err := s.ReadAsset(ctx, input.Id)
-	if err != nil {
-		return err
-	}
+	issuer.HandleError(err)
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+	clientID, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
 	if clientID != asset.Owner {
 		return issuer.ReturnError(issuer.UNAUTHORIZE)
@@ -96,27 +82,21 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.UpdatedAt = UpdatedR
 
 	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
+	issuer.HandleError(err)
 
 	return ctx.GetStub().PutState(input.Id, assetJSON)
 }
 
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
-	if err != nil {
-		return err
-	}
+	assetRegulator, err := s.ReadAsset(ctx, id)
+	issuer.HandleError(err)
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+	clientIDRegulator, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
-	if clientID != asset.Owner {
-		return issuer.ReturnError(issuer.UNAUTHORIZE)
+	if clientIDRegulator != assetRegulator.Owner {
+		return fmt.Errorf(issuer.UNAUTHORIZE)
 	}
 
 	return ctx.GetStub().DelState(id)
@@ -124,26 +104,19 @@ func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface,
 
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, id string, newOwner string) error {
 
-	asset, err := s.ReadAsset(ctx, id)
-	if err != nil {
-		return err
-	}
+	assetR, err := s.ReadAsset(ctx, id)
+	issuer.HandleError(err)
 
-	clientID, err := s.GetSubmittingClientIdentity(ctx)
-	if err != nil {
-		return err
-	}
+	clientIDR, err := issuer.GetIdentity(ctx)
+	issuer.HandleError(err)
 
-	if clientID != asset.Owner {
+	if clientIDR != assetR.Owner {
 		return issuer.ReturnError(issuer.UNAUTHORIZE)
 	}
 
-	asset.Owner = newOwner
-	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return err
-	}
-
+	assetR.Owner = newOwner
+	assetJSON, err := json.Marshal(assetR)
+	issuer.HandleError(err)
 	return ctx.GetStub().PutState(id, assetJSON)
 }
 
@@ -168,120 +141,59 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 
 func (s *SmartContract) GetAllRegulator(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {
 
-	orgName, err := ctx.GetClientIdentity().GetMSPID()
+	var filterRegulator = map[string]interface{}{}
+
+	entityGetAll := entity.FilterGetAll{}
+	interfaceRegulator, err := issuer.Unmarshal(args, entityGetAll)
+	if err != nil {
+		return nil, err
+	}
+	input := interfaceRegulator.(*entity.FilterGetAll)
+
+	queryStringRegulator, err := issuer.BuildQueryString(filterRegulator)
 	if err != nil {
 		return nil, err
 	}
 
-	var input entity.Pagination
-	errInput := json.Unmarshal([]byte(args), &input)
-
-	if errInput != nil {
-		return nil, issuer.ReturnError(issuer.DATAUNMARSHAL)
-	}
-
-	limit := input.Limit
-	skip := input.Skip
-
-	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
-	if err != nil {
-		return nil, err
-	}
-	defer resultsIterator.Close()
-
-	total := 0
-	for resultsIterator.HasNext() {
-		_, err := resultsIterator.Next()
-		if err != nil {
-			return nil, err
-		}
-		total++
-	}
-
-	selector := map[string]interface{}{
-		"selector": map[string]interface{}{
-			"orgName": orgName,
-		},
-		"limit": limit,
-		"skip":  skip,
-	}
-
-	queryString, err := json.Marshal(selector)
+	total, err := issuer.CountTotalResults(ctx, queryStringRegulator)
 	if err != nil {
 		return nil, err
 	}
 
-	queryResults, _, err := ctx.GetStub().GetQueryResultWithPagination(string(queryString), int32(limit), "")
+	if input.Skip > total {
+		return nil, issuer.ReturnError(issuer.SKIPOVER)
+	}
+
+	arrRegulator, err := core.FetchResultsWithPagination(ctx, input)
 	if err != nil {
 		return nil, err
 	}
-	defer queryResults.Close()
 
-	var assets []*entity.TransectionReponse
-
-	for queryResults.HasNext() {
-		queryResponse, err := queryResults.Next()
-		if err != nil {
-			return nil, err
-		}
-
-		var asset entity.TransectionReponse
-		err = json.Unmarshal(queryResponse.Value, &asset)
-		if err != nil {
-			return nil, err
-		}
-
-		assets = append(assets, &asset)
-	}
-
-	sort.Slice(assets, func(i, j int) bool {
-		return assets[i].UpdatedAt.Before(assets[j].UpdatedAt)
+	sort.Slice(arrRegulator, func(i, j int) bool {
+		return arrRegulator[i].UpdatedAt.Before(arrRegulator[j].UpdatedAt)
 	})
 
-	if len(assets) == 0 {
-		assets = []*entity.TransectionReponse{}
+	if len(arrRegulator) == 0 {
+		arrRegulator = []*entity.TransectionReponse{}
 	}
 
 	return &entity.GetAllReponse{
 		Data:  "All Regulator",
-		Obj:   assets,
+		Obj:   arrRegulator,
 		Total: total,
 	}, nil
 }
 
-func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
-
-	assetJSON, err := ctx.GetStub().GetState(id)
-	if err != nil {
-		return false, fmt.Errorf("failed to read from world state: %v", err)
-	}
-
-	return assetJSON != nil, nil
-}
-
-func (s *SmartContract) GetSubmittingClientIdentity(ctx contractapi.TransactionContextInterface) (string, error) {
-
-	b64ID, err := ctx.GetClientIdentity().GetID()
-	if err != nil {
-		return "", fmt.Errorf("failed to read clientID: %v", err)
-	}
-	decodeID, err := base64.StdEncoding.DecodeString(b64ID)
-	if err != nil {
-		return "", fmt.Errorf("failed to base64 decode clientID: %v", err)
-	}
-	return string(decodeID), nil
-}
-
 func (s *SmartContract) FilterRegulator(ctx contractapi.TransactionContextInterface, key, value string) ([]*entity.TransectionRegulator, error) {
-	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+	resultsIteratorR, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {
 		return nil, err
 	}
-	defer resultsIterator.Close()
+	defer resultsIteratorR.Close()
 
-	var assets []*entity.TransectionRegulator
-	for resultsIterator.HasNext() {
-		queryResponse, err := resultsIterator.Next()
+	var assetRegulator []*entity.TransectionRegulator
+	for resultsIteratorR.HasNext() {
+		queryResponse, err := resultsIteratorR.Next()
 		if err != nil {
 			return nil, err
 		}
@@ -298,13 +210,13 @@ func (s *SmartContract) FilterRegulator(ctx contractapi.TransactionContextInterf
 		}
 
 		if val, ok := m[key]; ok && fmt.Sprintf("%v", val) == value {
-			assets = append(assets, &dataR)
+			assetRegulator = append(assetRegulator, &dataR)
 		}
 	}
 
-	sort.Slice(assets, func(i, j int) bool {
-		return assets[i].UpdatedAt.After(assets[j].UpdatedAt)
+	sort.Slice(assetRegulator, func(i, j int) bool {
+		return assetRegulator[i].UpdatedAt.After(assetRegulator[j].UpdatedAt)
 	})
 
-	return assets, nil
+	return assetRegulator, nil
 }
