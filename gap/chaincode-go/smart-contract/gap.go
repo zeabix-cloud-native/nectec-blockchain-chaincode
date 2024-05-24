@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/gap/chaincode-go/core"
@@ -338,47 +337,4 @@ func (s *SmartContract) CreateGapCsv(
 	}
 
 	return nil
-}
-
-func (s *SmartContract) MarkUsedGap(ctx contractapi.TransactionContextInterface, args string) error {
-	var input struct {
-		CertId   string `json:"certId"`
-		FarmerID string `json:"farmerId"`
-	}
-	errInput := json.Unmarshal([]byte(args), &input)
-	if errInput != nil {
-		return fmt.Errorf("unmarshal json string: %v", errInput)
-	}
-
-	queryKeyG := fmt.Sprintf(`{"selector":{"certId":"%s"}}`, input.CertId)
-	resultsIteratorG, err := ctx.GetStub().GetQueryResult(queryKeyG)
-	if err != nil {
-		return fmt.Errorf("error querying chaincode: %v", err)
-	}
-	defer resultsIteratorG.Close()
-
-	if !resultsIteratorG.HasNext() {
-		return fmt.Errorf("no asset found with certId: %s", input.CertId)
-	}
-
-	queryResponse, err := resultsIteratorG.Next()
-	if err != nil {
-		return fmt.Errorf("error iterating query results: %v", err)
-	}
-
-	var asset entity.TransectionGAP
-	err = json.Unmarshal(queryResponse.Value, &asset)
-	if err != nil {
-		return fmt.Errorf("error unmarshalling asset: %v", err)
-	}
-
-	asset.FarmerID = input.FarmerID
-	asset.UpdatedAt = time.Now()
-
-	assetJSON, err := json.Marshal(asset)
-	if err != nil {
-		return fmt.Errorf("error marshalling updated asset: %v", err)
-	}
-
-	return ctx.GetStub().PutState(asset.Id, assetJSON)
 }
