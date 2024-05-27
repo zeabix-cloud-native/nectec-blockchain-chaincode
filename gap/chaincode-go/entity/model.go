@@ -26,6 +26,7 @@ type FilterGetAll struct {
 	Skip         int      `json:"skip"`
 	Limit        int      `json:"limit"`
 	CertID       *string  `json:"certId"`
+	FarmerID       *string  `json:"farmerId"`
 	AreaCode     *string  `json:"areaCode"`
 	District     *string  `json:"district"`
 	Province     *string  `json:"province"`

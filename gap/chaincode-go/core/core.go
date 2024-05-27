@@ -9,6 +9,9 @@ import (
 
 func SetFilter(input *entity.FilterGetAll) map[string]interface{} {
 	var filter = map[string]interface{}{}
+	if input.FarmerID != nil {
+		filter["farmerId"] = *input.FarmerID
+	}
 	if input.CertID != nil {
 		filter["certId"] = *input.CertID
 	}
