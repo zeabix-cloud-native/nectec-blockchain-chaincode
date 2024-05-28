@@ -141,8 +141,8 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	return &asset, nil
 }
 
-func (s *SmartContract) GetPackerById(ctx contractapi.TransactionContextInterface, userId string) (*entity.TransectionReponse, error) {
-	queryPacker := fmt.Sprintf(`{"selector":{"userId":"%s"}}`, userId)
+func (s *SmartContract) GetPackerById(ctx contractapi.TransactionContextInterface, id string) (*entity.TransectionReponse, error) {
+	queryPacker := fmt.Sprintf(`{"selector":{"id":"%s"}}`, id)
 
 	resultsPacker, err := ctx.GetStub().GetQueryResult(queryPacker)
 	if err != nil {
@@ -151,7 +151,7 @@ func (s *SmartContract) GetPackerById(ctx contractapi.TransactionContextInterfac
 	defer resultsPacker.Close()
 
 	if !resultsPacker.HasNext() {
-		return nil, fmt.Errorf("the asset with userId %s does not exist", userId)
+		return nil, fmt.Errorf("the asset with id %s does not exist", id)
 	}
 
 	queryResponse, err := resultsPacker.Next()

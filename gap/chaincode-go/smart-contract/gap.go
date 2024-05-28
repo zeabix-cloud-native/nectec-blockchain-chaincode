@@ -77,12 +77,6 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset, err := s.ReadAsset(ctx, input.Id)
 	issuer.HandleError(err)
 
-	clientID, err := issuer.GetIdentity(ctx)
-	issuer.HandleError(err)
-	if clientID != asset.Owner {
-		return issuer.ReturnError(issuer.UNAUTHORIZE)
-	}
-
 	UpdatedGap := issuer.GetTimeNow()
 
 	asset.Id = input.Id
