@@ -12,7 +12,7 @@ import (
 
 const (
 	UNAUTHORIZE   string = "client is not authorized this asset"
-	TIMEFORMAT    string = "02-01-2006T15:04:05Z"
+	TIMEFORMAT    string = "02-01-2006 15:04:05"
 	SKIPOVER      string = "skip over total data"
 	DATAUNMARSHAL string = "unmarshal json string"
 )

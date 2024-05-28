@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/hyperledger/fabric-contract-api-go v1.2.1
-	github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer v0.0.0-20240523162955-ef50cdc016bb
+	github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer v0.0.0-20240528102038-38ee42da0b10
 )
 
 require (
