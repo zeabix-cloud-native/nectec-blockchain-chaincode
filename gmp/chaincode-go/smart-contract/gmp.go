@@ -43,6 +43,7 @@ func (s *SmartContract) CreateGMP(
 
 	asset := entity.TransectionGMP{
 		Id:                         input.Id,
+		PackerId: 									input.PackerId,		
 		PackingHouseRegisterNumber: input.PackingHouseRegisterNumber,
 		Address:                    input.Address,
 		PackingHouseName:           input.PackingHouseName,
@@ -78,6 +79,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	UpdatedGmp := issuer.GetTimeNow()
 
 	asset.Id = input.Id
+	asset.PackerId = input.PackerId
 	asset.PackingHouseRegisterNumber = input.PackingHouseRegisterNumber
 	asset.Address = input.Address
 	asset.PackingHouseName = input.PackingHouseName
@@ -256,6 +258,7 @@ func (s *SmartContract) CreateGmpCsv(
 
 		assetG := entity.TransectionGMP{
 			Id:                         input.Id,
+			PackerId: 									input.PackerId,
 			PackingHouseRegisterNumber: input.PackingHouseRegisterNumber,
 			Address:                    input.Address,
 			PackingHouseName:           input.PackingHouseName,

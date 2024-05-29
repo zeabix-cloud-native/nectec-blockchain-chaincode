@@ -14,6 +14,14 @@ func SetFilter(input *entity.FilterGetAll) map[string]interface{} {
 		filter["gap"] = *input.Gap
 	}
 
+	if input.Search != nil {
+		filter["search"] = *input.Search
+	}
+
+	if (input.FarmerID != nil) {
+		filter["farmerId"] = *input.FarmerID
+	}
+
 	if input.StartDate != nil && input.EndDate != nil {
 		filter["createdAt"] = map[string]interface{}{
 			"$gte": *input.StartDate,
@@ -36,9 +44,29 @@ func SetFilter(input *entity.FilterGetAll) map[string]interface{} {
 }
 
 func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, input *entity.FilterGetAll, filter map[string]interface{}) ([]*entity.TransectionReponse, error) {
+	search, searchExists := filter["search"]
 
+	if searchExists {
+		delete(filter, "search")
+	}
+
+	// Initialize the base selector
 	selector := map[string]interface{}{
 		"selector": filter,
+	}
+
+	if searchExists && search != "" {
+		selector["selector"] = map[string]interface{}{
+			"$and": []map[string]interface{}{
+				filter,
+				{
+					"$or": []map[string]interface{}{
+						{"gmp": map[string]interface{}{"$regex": search}},
+						{"packingHouseName": map[string]interface{}{"$regex": search}},
+					},
+				},
+			},
+		}
 	}
 
 	if input.Skip != 0 || input.Limit != 0 {

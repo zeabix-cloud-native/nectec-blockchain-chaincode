@@ -40,6 +40,7 @@ func (s *SmartContract) CreatePacking(
 	issuer.HandleError(err)
 
 	TimePacking := issuer.GetTimeNow()
+	fmt.Printf("CreatedAt %v", TimePacking)
 
 	asset := entity.TransectionPacking{
 		Id:             input.Id,
