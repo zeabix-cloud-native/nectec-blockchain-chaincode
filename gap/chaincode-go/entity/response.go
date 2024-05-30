@@ -3,7 +3,8 @@ package entity
 import "time"
 
 type TransectionReponse struct {
-	Id          string    `json:"id"`
+	Id          			 string    `json:"id"`
+	DisplayCertID      string    `json:"displayCertId"`
 	CertID      string    `json:"certId"`
 	AreaCode    string    `json:"areaCode"`
 	AreaRai     float32   `json:"areaRai"`

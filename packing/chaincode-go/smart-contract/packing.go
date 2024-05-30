@@ -46,6 +46,7 @@ func (s *SmartContract) CreatePacking(
 		Id:             input.Id,
 		OrderID:        input.OrderID,
 		FarmerID:       input.FarmerID,
+		PackingHouseName: input.PackingHouseName,
 		ForecastWeight: input.ForecastWeight,
 		ActualWeight:   input.ActualWeight,
 		SavedTime:      input.SavedTime,

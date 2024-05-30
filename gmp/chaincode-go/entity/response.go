@@ -19,3 +19,8 @@ type GetAllReponse struct {
 	Obj   []*TransectionReponse `json:"obj"`
 	Total int                   `json:"total"`
 }
+
+type GetByRegisterNumberResponse struct {
+	Data string              `json:"data"`
+	Obj  *TransectionReponse `json:"obj"`
+}

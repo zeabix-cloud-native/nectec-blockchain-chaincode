@@ -5,6 +5,7 @@ import "time"
 type TransectionGAP struct {
 	Id          string    `json:"id"`
 	CertID      string    `json:"certId"`
+	DisplayCertID      string    `json:"displayCertId"`
 	AreaCode    string    `json:"areaCode"`
 	AreaRai     float32   `json:"areaRai"`
 	AreaStatus  string    `json:"areaStatus"`

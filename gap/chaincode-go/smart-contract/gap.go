@@ -43,8 +43,9 @@ func (s *SmartContract) CreateGAP(
 	TimeGap := issuer.GetTimeNow()
 
 	asset := entity.TransectionGAP{
-		Id:          input.Id,
-		CertID:      input.CertID,
+		Id:          				input.Id,
+		CertID:      				input.CertID,
+		DisplayCertID:      input.DisplayCertID,
 		AreaCode:    input.AreaCode,
 		AreaRai:     input.AreaRai,
 		AreaStatus:  input.AreaStatus,
@@ -80,6 +81,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	UpdatedGap := issuer.GetTimeNow()
 
 	asset.Id = input.Id
+	asset.DisplayCertID = input.DisplayCertID
 	asset.CertID = input.CertID
 	asset.AreaCode = input.AreaCode
 	asset.AreaRai = input.AreaRai
@@ -340,7 +342,8 @@ func (s *SmartContract) CreateGapCsv(
 		}
 
 		assetGap := entity.TransectionGAP{
-			Id:          input.Id,
+			Id:          				 input.Id,
+			DisplayCertID:       input.DisplayCertID,
 			CertID:      input.CertID,
 			AreaCode:    input.AreaCode,
 			AreaRai:     input.AreaRai,

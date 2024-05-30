@@ -15,6 +15,7 @@ type TransectionPacking struct {
 	Remark         string    `json:"remark"`
 	PackerId       string    `json:"packerId"`
 	Gmp            string    `json:"gmp"`
+	PackingHouseName            string    `json:"packingHouseName"`
 	Gap            string    `json:"gap"` // รหัสซื้อขาย
 	ProcessStatus  int       `json:"processStatus"`
 	Owner          string    `json:"owner"`
@@ -32,6 +33,7 @@ type FilterGetAll struct {
 	Gap                *string  `json:"gap"`
 	StartDate          *string  `json:"startDate"`
 	EndDate            *string  `json:"endDate"`
+	PackingHouseName            string    `json:"packingHouseName"`
 	ForecastWeightFrom *float32 `json:"forecastWeightFrom"`
 	ForecastWeightTo   *float32 `json:"forecastWeightTo"`
 	ProcessStatus      *int     `json:"processStatus"`

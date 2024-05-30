@@ -189,6 +189,44 @@ func (s *SmartContract) GetAllGMP(ctx contractapi.TransactionContextInterface, a
 	}, nil
 }
 
+func (s *SmartContract) GetGmpByPackingHouseNumber(ctx contractapi.TransactionContextInterface, packingHouseRegisterNumber string) (*entity.GetByRegisterNumberResponse, error) {
+	// Get the asset using CertID
+	queryKeyPackingHouse := fmt.Sprintf(`{"selector":{"packingHouseRegisterNumber":"%s"}}`, packingHouseRegisterNumber)
+
+	resultsIteratorPackingHouse, err := ctx.GetStub().GetQueryResult(queryKeyPackingHouse)
+	var asset *entity.TransectionReponse
+	resData := "Get gmp by packingHouseRegisterNumber"
+	if err != nil {
+		return nil, fmt.Errorf("error querying chaincode: %v", err)
+	}
+	defer resultsIteratorPackingHouse.Close()
+
+	if !resultsIteratorPackingHouse.HasNext() {
+		resData = "Not found gmp by packingHouseRegisterNumber"
+
+		return &entity.GetByRegisterNumberResponse{
+			Data: resData,
+			Obj:  asset,
+		}, nil
+	}
+
+	queryResponse, err := resultsIteratorPackingHouse.Next()
+	if err != nil {
+		return nil, fmt.Errorf("error getting next query result: %v", err)
+	}
+
+	err = json.Unmarshal(queryResponse.Value, &asset)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling asset JSON: %v", err)
+	}
+
+	return &entity.GetByRegisterNumberResponse{
+		Data: resData,
+		Obj:  asset,
+	}, nil
+
+}
+
 func (s *SmartContract) FilterGmp(ctx contractapi.TransactionContextInterface, key, value string) ([]*entity.TransectionGMP, error) {
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 	if err != nil {

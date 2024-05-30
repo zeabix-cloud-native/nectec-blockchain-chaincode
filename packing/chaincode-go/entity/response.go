@@ -16,7 +16,8 @@ type TransectionReponse struct {
 	FinalWeight   float32   `json:"finalWeight"`
 	Remark        string    `json:"remark"`
 	PackerId      string    `json:"packerId"`
-	Gmp           string    `json:"gmp"`
+	Gmp           						 string    `json:"gmp"`
+	PackingHouseName           string    `json:"packingHouseName"`
 	Gap           string    `json:"gap"`
 	ProcessStatus int       `json:"processStatus"`
 	UpdatedAt     time.Time `json:"updatedAt"`
