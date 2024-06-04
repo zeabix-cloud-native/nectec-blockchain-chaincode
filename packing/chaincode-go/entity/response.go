@@ -29,3 +29,10 @@ type GetAllReponse struct {
 	Obj   []*TransectionReponse `json:"obj"`
 	Total int                   `json:"total"`
 }
+
+type TransactionHistory struct {
+	TxId      string                `json:"tx_id"`
+	IsDelete  bool                  `json:"isDelete"`
+	Value     []*TransectionReponse `json:"value"`
+	Timestamp string                `json:"timestamp"`
+}

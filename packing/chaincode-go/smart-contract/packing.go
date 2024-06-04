@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 	"github.com/zeabix-cloud-native/nstda-blockchain-chaincode/internal/issuer"
@@ -79,12 +80,6 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 
 	asset, err := s.ReadAsset(ctx, input.Id)
 	issuer.HandleError(err)
-
-	clientID, err := issuer.GetIdentity(ctx)
-	issuer.HandleError(err)
-	if clientID != asset.Owner {
-		return issuer.ReturnError(issuer.UNAUTHORIZE)
-	}
 
 	UpdatedPacking := issuer.GetTimeNow()
 
@@ -244,4 +239,48 @@ func (s *SmartContract) FilterPacking(ctx contractapi.TransactionContextInterfac
 	})
 
 	return assetPacking, nil
+}
+
+func (s *SmartContract) GetHistoryForKey(ctx contractapi.TransactionContextInterface, key string) ([]*entity.TransactionHistory, error) {
+	resultsIterator, err := ctx.GetStub().GetHistoryForKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get history for key %s: %v", key, err)
+	}
+	defer resultsIterator.Close()
+
+	var history []*entity.TransactionHistory
+	var assetsValue []*entity.TransectionReponse
+
+	for resultsIterator.HasNext() {
+		// Get the next history record
+		record, err := resultsIterator.Next()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get next history record for key %s: %v", key, err)
+		}
+
+		var asset entity.TransectionReponse
+		if !record.IsDelete {
+			err = json.Unmarshal(record.Value, &asset)
+			if err != nil {
+				return nil, err
+			}
+			assetsValue = append(assetsValue, &asset)
+
+		} else {
+			assetsValue = []*entity.TransectionReponse{}
+		}
+		// Convert the timestamp to string in the desired format
+		timestampStr := time.Unix(record.Timestamp.Seconds, int64(record.Timestamp.Nanos)).Format(issuer.TIMEFORMAT)
+
+		historyRecord := &entity.TransactionHistory{
+			TxId:      record.TxId,
+			Value:     assetsValue,
+			Timestamp: timestampStr,
+			IsDelete:  record.IsDelete,
+		}
+
+		history = append(history, historyRecord)
+	}
+
+	return history, nil
 }
