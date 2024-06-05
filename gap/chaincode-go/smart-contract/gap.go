@@ -200,17 +200,20 @@ func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterfa
 	var asset *entity.TransectionReponse
 	resData := "Get gap by certID"
 	if err != nil {
-		return nil, fmt.Errorf("error querying chaincode: %v", err)
+		resData = fmt.Sprintf("error querying chaincode: %v", err)
+        return &entity.GetByCertIDReponse {
+            Data: resData,
+            Obj:  asset,
+        }, nil
 	}
 	defer resultsIteratorGap.Close()
 
 	if !resultsIteratorGap.HasNext() {
 		resData = "Not found gap by certID"
-
-		return &entity.GetByCertIDReponse{
-			Data: resData,
-			Obj:  asset,
-		}, nil
+        return &entity.GetByCertIDReponse {
+            Data: resData,
+            Obj:  asset,
+        }, nil
 	}
 
 	queryResponse, err := resultsIteratorGap.Next()
@@ -227,7 +230,6 @@ func (s *SmartContract) GetGapByCertID(ctx contractapi.TransactionContextInterfa
 		Data: resData,
 		Obj:  asset,
 	}, nil
-
 }
 
 func (s *SmartContract) GetAllGAP(ctx contractapi.TransactionContextInterface, args string) (*entity.GetAllReponse, error) {

@@ -18,6 +18,7 @@ type TransectionPacking struct {
 	PackingHouseName            string    `json:"packingHouseName"`
 	Gap            string    `json:"gap"` // รหัสซื้อขาย
 	ProcessStatus  int       `json:"processStatus"`
+	SellingStep				   int       `json:"sellingStep"`
 	Owner          string    `json:"owner"`
 	OrgName        string    `json:"orgName"`
 	UpdatedAt      time.Time `json:"updatedAt"`

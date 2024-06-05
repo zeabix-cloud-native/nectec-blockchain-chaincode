@@ -59,6 +59,7 @@ func (s *SmartContract) CreatePacking(
 		Gmp:            input.Gmp,
 		Gap:            input.Gap,
 		ProcessStatus:  input.ProcessStatus,
+		SellingStep:  	input.SellingStep,
 		Owner:          clientIDPacking,
 		OrgName:        orgName,
 		UpdatedAt:      TimePacking,
@@ -97,6 +98,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.Gmp = input.Gmp
 	asset.Gap = input.Gap
 	asset.ProcessStatus = input.ProcessStatus
+	asset.SellingStep = input.SellingStep
 	asset.UpdatedAt = UpdatedPacking
 
 	assetJSON, errPacking := json.Marshal(asset)
@@ -239,6 +241,59 @@ func (s *SmartContract) FilterPacking(ctx contractapi.TransactionContextInterfac
 	})
 
 	return assetPacking, nil
+}
+
+func (s *SmartContract) GetLatestHistoryForKey(ctx contractapi.TransactionContextInterface, key string) (*entity.TransactionHistory, error) {
+	resultsIterator, err := ctx.GetStub().GetHistoryForKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get history for key %s: %v", key, err)
+	}
+	defer resultsIterator.Close()
+
+	var latestHistory *entity.TransactionHistory
+	var assetsValue []*entity.TransectionReponse
+
+	for resultsIterator.HasNext() {
+		// Get the next history record
+		record, err := resultsIterator.Next()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get next history record for key %s: %v", key, err)
+		}
+
+		var asset entity.TransectionReponse
+		if !record.IsDelete {
+			err = json.Unmarshal(record.Value, &asset)
+			if err != nil {
+				return nil, err
+			}
+			assetsValue = append(assetsValue, &asset)
+		} else {
+			assetsValue = []*entity.TransectionReponse{}
+		}
+
+		// Sort assetsValue by SellingStep
+		sort.SliceStable(assetsValue, func(i, j int) bool {
+			return assetsValue[i].SellingStep > assetsValue[j].SellingStep
+		})
+
+		// Convert the timestamp to string in the desired format
+		timestampStr := time.Unix(record.Timestamp.Seconds, int64(record.Timestamp.Nanos)).Format(issuer.TIMEFORMAT)
+
+		historyRecord := &entity.TransactionHistory{
+			TxId:      record.TxId,
+			Value:     assetsValue,
+			Timestamp: timestampStr,
+			IsDelete:  record.IsDelete,
+		}
+
+		latestHistory = historyRecord
+	}
+
+	if latestHistory == nil {
+		return nil, fmt.Errorf("no history found for key %s", key)
+	}
+
+	return latestHistory, nil
 }
 
 func (s *SmartContract) GetHistoryForKey(ctx contractapi.TransactionContextInterface, key string) ([]*entity.TransactionHistory, error) {

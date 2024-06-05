@@ -20,6 +20,7 @@ type TransectionReponse struct {
 	PackingHouseName           string    `json:"packingHouseName"`
 	Gap           string    `json:"gap"`
 	ProcessStatus int       `json:"processStatus"`
+	SellingStep int       `json:"sellingStep"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 	CreatedAt     time.Time `json:"createdAt"`
 }
