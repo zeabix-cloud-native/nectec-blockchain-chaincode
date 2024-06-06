@@ -31,6 +31,7 @@ type FilterGetAll struct {
 	Search             *string  `json:"search"`
 	PackerId           *string  `json:"packerId"`
 	FarmerID					 *string  `json:"farmerId"` 
+	CertID					 	 *string  `json:"certId"` 
 	Gap                *string  `json:"gap"`
 	StartDate          *string  `json:"startDate"`
 	EndDate            *string  `json:"endDate"`

@@ -251,7 +251,7 @@ func (s *SmartContract) GetLatestHistoryForKey(ctx contractapi.TransactionContex
 	defer resultsIterator.Close()
 
 	var latestHistory *entity.TransactionHistory
-	var assetsValue []*entity.TransectionReponse
+	var packingAsset []*entity.TransectionReponse
 
 	for resultsIterator.HasNext() {
 		// Get the next history record
@@ -266,14 +266,14 @@ func (s *SmartContract) GetLatestHistoryForKey(ctx contractapi.TransactionContex
 			if err != nil {
 				return nil, err
 			}
-			assetsValue = append(assetsValue, &asset)
+			packingAsset = append(packingAsset, &asset)
 		} else {
-			assetsValue = []*entity.TransectionReponse{}
+			packingAsset = []*entity.TransectionReponse{}
 		}
 
-		// Sort assetsValue by SellingStep
-		sort.SliceStable(assetsValue, func(i, j int) bool {
-			return assetsValue[i].SellingStep > assetsValue[j].SellingStep
+		// Sort packingAsset by SellingStep
+		sort.SliceStable(packingAsset, func(i, j int) bool {
+			return packingAsset[i].SellingStep > packingAsset[j].SellingStep
 		})
 
 		// Convert the timestamp to string in the desired format
@@ -281,7 +281,7 @@ func (s *SmartContract) GetLatestHistoryForKey(ctx contractapi.TransactionContex
 
 		historyRecord := &entity.TransactionHistory{
 			TxId:      record.TxId,
-			Value:     assetsValue,
+			Value:     packingAsset,
 			Timestamp: timestampStr,
 			IsDelete:  record.IsDelete,
 		}

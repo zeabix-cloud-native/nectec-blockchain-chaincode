@@ -14,6 +14,10 @@ func SetFilter(input *entity.FilterGetAll) map[string]interface{} {
 		filter["gap"] = *input.Gap
 	}
 
+	if input.CertID != nil {
+		filter["certId"] = *input.CertID
+	}
+
 	if input.Search != nil {
 		filter["search"] = *input.Search
 	}
