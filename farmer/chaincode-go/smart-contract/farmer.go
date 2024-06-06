@@ -226,46 +226,46 @@ func (s *SmartContract) FilterFarmer(ctx contractapi.TransactionContextInterface
 
 func (s *SmartContract) GetHistoryForKey(ctx contractapi.TransactionContextInterface, key string) ([]*entity.TransactionHistory, error) {
 	// Get the history for the specified key
-	resultsIterator, err := ctx.GetStub().GetHistoryForKey(key)
+	farmerResultsIterator, err := ctx.GetStub().GetHistoryForKey(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get history for key %s: %v", key, err)
 	}
-	defer resultsIterator.Close()
+	defer farmerResultsIterator.Close()
 
-	var history []*entity.TransactionHistory
-	var assetsValue []*entity.TransectionReponse
-	for resultsIterator.HasNext() {
+	var farmerHistory []*entity.TransactionHistory
+	var farmerAssets []*entity.TransectionReponse
+	for farmerResultsIterator.HasNext() {
 		// Get the next history record
-		record, err := resultsIterator.Next()
+		farmer, err := farmerResultsIterator.Next()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get next history record for key %s: %v", key, err)
+			return nil, fmt.Errorf("failed to get next history farmer for key %s: %v", key, err)
 		}
 
 		var asset entity.TransectionReponse
-		if !record.IsDelete {
-			err = json.Unmarshal(record.Value, &asset)
+		if !farmer.IsDelete {
+			err = json.Unmarshal(farmer.Value, &asset)
 			if err != nil {
 				return nil, err
 			}
-			assetsValue = append(assetsValue, &asset)
+			farmerAssets = append(farmerAssets, &asset)
 
 		} else {
-			assetsValue = []*entity.TransectionReponse{}
+			farmerAssets = []*entity.TransectionReponse{}
 		}
 		// Convert the timestamp to string in the desired format
-		timestampStr := time.Unix(record.Timestamp.Seconds, int64(record.Timestamp.Nanos)).Format(issuer.TIMEFORMAT)
+		timestampStr := time.Unix(farmer.Timestamp.Seconds, int64(farmer.Timestamp.Nanos)).Format(issuer.TIMEFORMAT)
 
-		historyRecord := &entity.TransactionHistory{
-			TxId:      record.TxId,
-			Value:     assetsValue,
+		historyFarmer := &entity.TransactionHistory{
+			TxId:      farmer.TxId,
+			Value:     farmerAssets,
 			Timestamp: timestampStr,
-			IsDelete:  record.IsDelete,
+			IsDelete:  farmer.IsDelete,
 		}
 
-		history = append(history, historyRecord)
+		farmerHistory = append(farmerHistory, historyFarmer)
 	}
 
-	return history, nil
+	return farmerHistory, nil
 }
 
 func (s *SmartContract) GetLastIdFarmer(ctx contractapi.TransactionContextInterface) string {
