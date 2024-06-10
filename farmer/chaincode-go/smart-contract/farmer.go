@@ -3,6 +3,7 @@ package farmer
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"sort"
 	"time"
 
@@ -54,6 +55,7 @@ func (s *SmartContract) CreateFarmer(
 		OrgName:   orgName,
 		UpdatedAt: CreatedAt,
 		CreatedAt: CreatedAt,
+		FarmerGaps: input.FarmerGaps,
 	}
 	assetJSON, err := json.Marshal(asset)
 	issuer.HandleError(err)
@@ -71,18 +73,12 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset, err := s.ReadAsset(ctx, input.Id)
 	issuer.HandleError(err)
 
-	clientID, err := issuer.GetIdentity(ctx)
-	issuer.HandleError(err)
-
-	if clientID != asset.Owner {
-		return fmt.Errorf(issuer.UNAUTHORIZE)
-	}
-
 	UpdatedAt := issuer.GetTimeNow()
 
 	asset.Id = input.Id
 	asset.CertId = input.CertId
 	asset.UpdatedAt = UpdatedAt
+	asset.FarmerGaps = input.FarmerGaps
 
 	assetJSON, err := json.Marshal(asset)
 	issuer.HandleError(err)
@@ -139,6 +135,10 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 	if err != nil {
 		return nil, err
 	}
+	
+	if asset.FarmerGaps == nil {
+		asset.FarmerGaps = []entity.FarmerGap{} 
+	}
 
 	return &asset, nil
 }
@@ -179,6 +179,10 @@ func (s *SmartContract) GetAllFarmer(ctx contractapi.TransactionContextInterface
 
 	if len(arrFarmer) == 0 {
 		arrFarmer = []*entity.TransectionReponse{}
+	}
+	
+	for _, farmer := range arrFarmer {
+		log.Printf("farmer item %v", farmer)
 	}
 
 	return &entity.GetAllReponse{
@@ -345,6 +349,7 @@ func (s *SmartContract) CreateFarmerCsv(
 		asset := entity.TransectionFarmer{
 			Id:        input.Id,
 			CertId:    input.CertId,
+			FarmerGaps: input.FarmerGaps,
 			Owner:     clientID,
 			OrgName:   orgName,
 			UpdatedAt: input.CreatedAt,

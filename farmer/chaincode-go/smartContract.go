@@ -11,8 +11,10 @@ import (
 	farmer "github.com/zeabix-cloud-native/nstda-blockchain-chaincode/farmer/chaincode-go/smart-contract"
 )
 
+
 func main() {
 	abacSmartContract, err := contractapi.NewChaincode(&farmer.SmartContract{})
+
 	if err != nil {
 		log.Panicf("Error creating farmer chaincode: %v", err)
 	}

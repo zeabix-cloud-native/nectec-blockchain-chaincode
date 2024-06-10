@@ -10,6 +10,14 @@ import (
 func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, input *entity.FilterGetAll) ([]*entity.TransectionReponse, error) {
 	var filter = map[string]interface{}{}
 
+	if input.FarmerGap != "" {
+		filter["farmerGaps"] = map[string]interface{}{
+			"$elemMatch": map[string]interface{}{
+				"certId": input.FarmerGap,
+			},
+		}
+	}
+	
 	selector := map[string]interface{}{
 		"selector": filter,
 	}
@@ -42,6 +50,10 @@ func FetchResultsWithPagination(ctx contractapi.TransactionContextInterface, inp
 		if err != nil {
 			return nil, err
 		}
+		
+		 if dataF.FarmerGap == nil {
+			dataF.FarmerGap = []entity.FarmerGap{}
+	}
 
 		dataFarmers = append(dataFarmers, &dataF)
 	}

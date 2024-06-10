@@ -1,10 +1,13 @@
 package entity
 
-import "time"
+import (
+	"time"
+)
 
 type TransectionReponse struct {
 	Id        string    `json:"id"`
 	CertId    string    `json:"certId"`
+	FarmerGap []FarmerGap `json:"farmerGaps"`
 	UpdatedAt time.Time `json:"updatedAt"`
 	CreatedAt time.Time `json:"createdAt"`
 }
