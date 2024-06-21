@@ -313,6 +313,63 @@ func (s *SmartContract) FilterGap(ctx contractapi.TransactionContextInterface, k
 	return assetGap, nil
 }
 
+func (s *SmartContract) UpdateMultipleGap(
+	ctx contractapi.TransactionContextInterface,
+	args string,
+) error {
+	var inputs []entity.TransectionGAP
+
+	errInputGap := json.Unmarshal([]byte(args), &inputs)
+	issuer.HandleError(errInputGap)
+	
+	for _, input := range inputs {
+		assetJSON, err := ctx.GetStub().GetState(input.Id)
+		if err != nil {
+			return fmt.Errorf("failed to read from world state: %v", err)
+		}
+		if assetJSON == nil {
+			return fmt.Errorf("asset with ID %s does not exist", input.Id)
+		}
+		
+		var existingAsset entity.TransectionGAP
+		err = json.Unmarshal(assetJSON, &existingAsset)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal existing asset: %v", err)
+		}
+		UpdatedGap := issuer.GetTimeNow()
+		
+		existingAsset.Id =          				 input.Id
+		existingAsset.DisplayCertID =       input.DisplayCertID
+		existingAsset.CertID =      input.CertID
+		existingAsset.AreaCode =    input.AreaCode
+		existingAsset.AreaRai =     input.AreaRai
+		existingAsset.AreaStatus =  input.AreaStatus
+		existingAsset.OldAreaCode = input.OldAreaCode
+		existingAsset.IssueDate =   input.IssueDate
+		existingAsset.ExpireDate =  input.ExpireDate
+		existingAsset.District =    input.District
+		existingAsset.Province =    input.Province
+		existingAsset.UpdatedAt =		UpdatedGap
+		existingAsset.Source =      input.Source
+		existingAsset.FarmerID =    input.FarmerID
+		existingAsset.UpdatedDate = input.UpdatedDate
+		
+		updatedAssetJSON, err := json.Marshal(existingAsset)
+		if err != nil {
+			return fmt.Errorf("failed to marshal updated asset: %v", err)
+		}
+		
+		err = ctx.GetStub().PutState(input.Id, updatedAssetJSON)
+		if err != nil {
+			return fmt.Errorf("failed to update asset in world state: %v", err)
+		}
+		
+		fmt.Printf("Asset %s updated successfully\n", input.Id)
+	}
+	
+	return nil
+}
+
 func (s *SmartContract) CreateGapCsv(
 	ctx contractapi.TransactionContextInterface,
 	args string,
