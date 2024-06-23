@@ -296,9 +296,9 @@ func (s *SmartContract) CreatePackerCsv(
 	var inputs []entity.TransectionPacker
 	var eventPayloads []entity.TransectionPacker
 
-	errInput := json.Unmarshal([]byte(args), &inputs)
-	if errInput != nil {
-		return fmt.Errorf("failed to unmarshal JSON array: %v", errInput)
+	errPackerInput := json.Unmarshal([]byte(args), &inputs)
+	if errPackerInput != nil {
+		return fmt.Errorf("failed to unmarshal JSON array: %v", errPackerInput)
 	}
 
 	for _, input := range inputs {
@@ -307,11 +307,11 @@ func (s *SmartContract) CreatePackerCsv(
 			return fmt.Errorf("failed to get submitting client's MSP ID: %v", err)
 		}
 
-		existFarmer, err := issuer.AssetExists(ctx, input.Id)
+		existPacker, err := issuer.AssetExists(ctx, input.Id)
 		if err != nil {
 			return fmt.Errorf("error checking if asset exists: %v", err)
 		}
-		if existFarmer {
+		if existPacker {
 			return fmt.Errorf("the asset %s already exists", input.Id)
 		}
 
