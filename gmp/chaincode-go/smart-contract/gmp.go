@@ -320,3 +320,54 @@ func (s *SmartContract) CreateGmpCsv(
 
 	return nil
 }
+
+
+func (s *SmartContract) UpdateMultipleGmp(
+	ctx contractapi.TransactionContextInterface,
+	args string,
+) error {
+	var inputs []entity.TransectionGMP
+
+	errInputGap := json.Unmarshal([]byte(args), &inputs)
+	issuer.HandleError(errInputGap)
+	
+	for _, input := range inputs {
+		assetJSON, err := ctx.GetStub().GetState(input.Id)
+		if err != nil {
+			return fmt.Errorf("failed to read from world state: %v", err)
+		}
+		if assetJSON == nil {
+			return fmt.Errorf("asset with ID %s does not exist", input.Id)
+		}
+		
+		var existingAsset entity.TransectionGMP
+		err = json.Unmarshal(assetJSON, &existingAsset)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal existing asset: %v", err)
+		}
+		UpdatedGmp := issuer.GetTimeNow()
+		
+		existingAsset.Id = input.Id
+		existingAsset.PackerId = input.PackerId
+		existingAsset.PackingHouseRegisterNumber = input.PackingHouseRegisterNumber
+		existingAsset.Address = input.Address
+		existingAsset.PackingHouseName = input.PackingHouseName
+		existingAsset.UpdatedDate = input.UpdatedDate
+		existingAsset.Source = input.Source
+		existingAsset.UpdatedAt = UpdatedGmp
+
+		updatedAssetJSON, err := json.Marshal(existingAsset)
+		if err != nil {
+			return fmt.Errorf("failed to marshal updated asset: %v", err)
+		}
+		
+		err = ctx.GetStub().PutState(input.Id, updatedAssetJSON)
+		if err != nil {
+			return fmt.Errorf("failed to update asset in world state: %v", err)
+		}
+		
+		fmt.Printf("Asset %s updated successfully\n", input.Id)
+	}
+	
+	return nil
+}

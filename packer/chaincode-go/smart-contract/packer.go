@@ -47,6 +47,7 @@ func (s *SmartContract) CreatePacker(
 		Id:        input.Id,
 		CertId:    input.CertId,
 		UserId:    input.UserId,
+		PackerGmp: input.PackerGmp,
 		Owner:     clientID,
 		OrgName:   orgName,
 		UpdatedAt: TimePacker,
@@ -82,6 +83,7 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 	asset.CertId = input.CertId
 	asset.UserId = input.UserId
 	asset.UpdatedAt = UpdatedPacker
+	asset.PackerGmp = input.PackerGmp
 
 	assetJSON, errP := json.Marshal(asset)
 	issuer.HandleError(errP)
@@ -249,3 +251,107 @@ func (s *SmartContract) FilterPacker(ctx contractapi.TransactionContextInterface
 
 	return assetPacker, nil
 }
+
+func (s *SmartContract) GetLastIdPacker(ctx contractapi.TransactionContextInterface) string {
+	// Query to get all records sorted by ID in descending order
+	query := `{
+		"selector": {},
+		"sort": [{"_id": "desc"}],
+		"limit": 1
+	}`
+
+	resultsIterator, err := ctx.GetStub().GetQueryResult(query)
+	if err != nil {
+		return fmt.Sprintf("error querying CouchDB: %v", err)
+	}
+	defer resultsIterator.Close()
+
+	// Check if there is a result
+	if !resultsIterator.HasNext() {
+		return ""
+	}
+
+	// Get the first (and only) result
+	queryResponse, err := resultsIterator.Next()
+	if err != nil {
+		return "error iterating query results"
+	}
+
+	var result struct {
+		Id string `json:"id"`
+	}
+
+	// Unmarshal the result into the result struct
+	if err := json.Unmarshal(queryResponse.Value, &result); err != nil {
+		return "error unmarshalling document"
+	}
+
+	return result.Id
+}
+
+func (s *SmartContract) CreatePackerCsv(
+	ctx contractapi.TransactionContextInterface,
+	args string,
+) error {
+	var inputs []entity.TransectionPacker
+	var eventPayloads []entity.TransectionPacker
+
+	errInput := json.Unmarshal([]byte(args), &inputs)
+	if errInput != nil {
+		return fmt.Errorf("failed to unmarshal JSON array: %v", errInput)
+	}
+
+	for _, input := range inputs {
+		orgName, err := ctx.GetClientIdentity().GetMSPID()
+		if err != nil {
+			return fmt.Errorf("failed to get submitting client's MSP ID: %v", err)
+		}
+
+		existFarmer, err := issuer.AssetExists(ctx, input.Id)
+		if err != nil {
+			return fmt.Errorf("error checking if asset exists: %v", err)
+		}
+		if existFarmer {
+			return fmt.Errorf("the asset %s already exists", input.Id)
+		}
+
+		clientID, err := issuer.GetIdentity(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get submitting client's identity: %v", err)
+		}
+
+		asset := entity.TransectionPacker{
+			Id:        input.Id,
+			CertId:    input.CertId,
+			PackerGmp: input.PackerGmp,
+			Owner:     clientID,
+			OrgName:   orgName,
+			UpdatedAt: input.CreatedAt,
+			CreatedAt: input.UpdatedAt,
+		}
+
+		assetJSON, err := json.Marshal(asset)
+		eventPayloads = append(eventPayloads, asset)
+		if err != nil {
+			return fmt.Errorf("failed to marshal asset JSON: %v", err)
+		}
+
+		err = ctx.GetStub().PutState(input.Id, assetJSON)
+		if err != nil {
+			return fmt.Errorf("failed to put state for asset %s: %v", input.Id, err)
+		}
+
+		fmt.Printf("Asset %s created successfully\n", input.Id)
+
+	}
+
+	eventPayloadJSON, err := json.Marshal(eventPayloads)
+	if err != nil {
+		return fmt.Errorf("failed to marshal asset JSON: %v", err)
+	}
+
+	ctx.GetStub().SetEvent("batchCreatedPackerEvent", eventPayloadJSON)
+
+	return nil
+}
+
