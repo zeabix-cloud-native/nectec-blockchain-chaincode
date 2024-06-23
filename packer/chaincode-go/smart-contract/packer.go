@@ -330,19 +330,18 @@ func (s *SmartContract) CreatePackerCsv(
 			CreatedAt: input.UpdatedAt,
 		}
 
-		assetJSON, err := json.Marshal(asset)
+		packerAssetJSON, packerErr := json.Marshal(asset)
 		eventPayloads = append(eventPayloads, asset)
-		if err != nil {
+		if packerErr != nil {
 			return fmt.Errorf("failed to marshal asset JSON: %v", err)
 		}
 
-		err = ctx.GetStub().PutState(input.Id, assetJSON)
+		err = ctx.GetStub().PutState(input.Id, packerAssetJSON)
 		if err != nil {
 			return fmt.Errorf("failed to put state for asset %s: %v", input.Id, err)
 		}
 
 		fmt.Printf("Asset %s created successfully\n", input.Id)
-
 	}
 
 	eventPayloadJSON, err := json.Marshal(eventPayloads)
